@@ -1,12 +1,18 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Header from "@/components/site/Header";
+import Hero from "@/components/site/Hero";
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1">
+        <Hero />
+      </main>
+      <footer className="border-t">
+        <div className="container mx-auto py-8 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} Gyanam. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 };

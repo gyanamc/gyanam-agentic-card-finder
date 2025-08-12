@@ -5,11 +5,15 @@ import { toast } from "@/components/ui/sonner";
 const Hero = () => {
   const [query, setQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
+    setError(null);
+    setResult(null);
     try {
       setLoading(true);
       const res = await fetch(
@@ -20,21 +24,46 @@ const Hero = () => {
           body: JSON.stringify({ query: q }),
         }
       );
+      const contentType = res.headers.get("content-type") || "";
       if (res.ok) {
-        toast.success("Request sent to webhook");
+        let dataText = "";
+        if (contentType.includes("application/json")) {
+          const data = await res.json();
+          // Try some common shapes, else stringify
+          if (typeof data === "string") {
+            dataText = data;
+          } else if (Array.isArray(data)) {
+            dataText = JSON.stringify(data, null, 2);
+          } else if ((data as any)?.message) {
+            dataText = String((data as any).message);
+          } else if ((data as any)?.answer) {
+            dataText = String((data as any).answer);
+          } else if ((data as any)?.result) {
+            const r = (data as any).result;
+            dataText = typeof r === "string" ? r : JSON.stringify(r, null, 2);
+          } else {
+            dataText = JSON.stringify(data, null, 2);
+          }
+        } else {
+          dataText = await res.text();
+        }
+        setResult(dataText || "No results.");
+        toast.success("Results received");
       } else {
         const text = await res.text();
+        const msg = `Webhook error ${res.status}${text ? `: ${text}` : ""}`;
+        setError(msg);
         toast.error(`Webhook error: ${res.status}`);
         console.error("Webhook error:", res.status, text);
       }
     } catch (err) {
       console.error(err);
+      setError("Network error. Please try again.");
       toast.error("Network error");
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <section className="relative isolate overflow-hidden">
       <div className="bg-hero">
@@ -65,6 +94,23 @@ const Hero = () => {
               />
               <button type="submit" className="sr-only">Search</button>
             </form>
+          </div>
+          <div className="mx-auto mt-8 w-full max-w-3xl px-6 text-left" aria-live="polite" aria-busy={loading}>
+            {loading && (
+              <p className="text-sm text-muted-foreground">Searching...</p>
+            )}
+            {!loading && error && (
+              <div role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            {!loading && result && (
+              <section className="rounded-lg border bg-card text-card-foreground shadow-sm">
+                <article className="p-6">
+                  <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed">{result}</pre>
+                </article>
+              </section>
+            )}
           </div>
         </div>
       </div>

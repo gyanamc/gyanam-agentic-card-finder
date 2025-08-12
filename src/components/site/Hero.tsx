@@ -128,7 +128,7 @@ const Hero = () => {
       setDebouncing(true);
       const delay = setTimeout(() => {
         runSearch(query);
-      }, 500);
+      }, 2000);
       return () => clearTimeout(delay);
     }
   }, [query, userTyping]);

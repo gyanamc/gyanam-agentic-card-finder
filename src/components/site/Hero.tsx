@@ -212,7 +212,7 @@ const Hero = () => {
                     .split(/<\/p>|<br\s*\/?>/i)
                     .filter((block) => block.trim() !== "")
                     .map((block, i) => {
-                      const randomOffset = Math.floor(Math.random() * 60) - 30; // ±30ms random
+                      const randomOffset = Math.floor(Math.random() * 60) - 30; // ±30ms
                       return (
                         <div
                           key={i}

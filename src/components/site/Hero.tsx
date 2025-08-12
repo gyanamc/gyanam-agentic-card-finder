@@ -15,6 +15,8 @@ const Hero = () => {
   const [query, setQuery] = React.useState(defaultSuggestions[0]);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = React.useState(0);
   const [userTyping, setUserTyping] = React.useState(false);
+  const [hasInteracted, setHasInteracted] = React.useState(false);
+  const [fadeClass, setFadeClass] = React.useState("opacity-100");
   const [loading, setLoading] = React.useState(false);
   const [debouncing, setDebouncing] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
@@ -42,7 +44,7 @@ const Hero = () => {
   const runSearch = async (searchQuery: string) => {
     setError(null);
     setResult(null);
-    setShowResults(false); // reset animation
+    setShowResults(false);
     setDebouncing(false);
     try {
       setLoading(true);
@@ -78,7 +80,7 @@ const Hero = () => {
         }
         setResult(dataText || "No results.");
         toast.success("Results received");
-        setTimeout(() => setShowResults(true), 50); // trigger fade animation
+        setTimeout(() => setShowResults(true), 50);
       } else {
         const text = await res.text();
         const msg = `Webhook error ${res.status}${text ? `: ${text}` : ""}`;
@@ -107,12 +109,20 @@ const Hero = () => {
     }
   };
 
-  // Run default search on first load
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!hasInteracted) {
+      setHasInteracted(true);
+      setUserTyping(true);
+      setQuery(""); // instantly clear the suggestion
+    }
+  };
+
+  // Auto-run default search
   React.useEffect(() => {
     runSearch(defaultSuggestions[0]);
   }, []);
 
-  // Debounced search when typing
+  // Debounced search
   React.useEffect(() => {
     if (userTyping && query.trim().length >= 3) {
       setDebouncing(true);
@@ -123,15 +133,19 @@ const Hero = () => {
     }
   }, [query, userTyping]);
 
-  // Cycle suggestions forever until user types
+  // Cycle suggestions with fade
   React.useEffect(() => {
     if (userTyping) return;
     const interval = setInterval(() => {
-      setCurrentSuggestionIndex((prev) => {
-        const nextIndex = (prev + 1) % defaultSuggestions.length;
-        setQuery(defaultSuggestions[nextIndex]);
-        return nextIndex;
-      });
+      setFadeClass("opacity-0");
+      setTimeout(() => {
+        setCurrentSuggestionIndex((prev) => {
+          const nextIndex = (prev + 1) % defaultSuggestions.length;
+          setQuery(defaultSuggestions[nextIndex]);
+          return nextIndex;
+        });
+        setFadeClass("opacity-100");
+      }, 300); // fade out before switching
     }, 4000);
     return () => clearInterval(interval);
   }, [userTyping]);
@@ -157,11 +171,12 @@ const Hero = () => {
                 name="q"
                 value={query}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
                 placeholder={defaultSuggestions[0]}
                 aria-label="Search"
                 autoFocus
                 autoComplete="on"
-                className="h-14 rounded-full px-6 text-base shadow-lg border-input bg-background focus-visible:ring-ring"
+                className={`h-14 rounded-full px-6 text-base shadow-lg border-input bg-background focus-visible:ring-ring transition-opacity duration-300 ${fadeClass}`}
                 disabled={loading}
               />
               <button type="submit" className="sr-only">Search</button>
@@ -212,7 +227,7 @@ const Hero = () => {
                     .split(/<\/p>|<br\s*\/?>/i)
                     .filter((block) => block.trim() !== "")
                     .map((block, i) => {
-                      const randomOffset = Math.floor(Math.random() * 60) - 30; // ±30ms
+                      const randomOffset = Math.floor(Math.random() * 60) - 30;
                       return (
                         <div
                           key={i}

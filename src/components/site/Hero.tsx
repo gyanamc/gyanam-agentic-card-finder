@@ -1,12 +1,31 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
+import DOMPurify from "dompurify";
 
 const Hero = () => {
   const [query, setQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  const toHtml = React.useMemo(() => {
+    if (!result) return "";
+    const looksLikeHtml = /<\/?(?:p|div|ul|ol|li|br|h[1-6]|strong|em|a)\b/i.test(result);
+    let html = result;
+    if (!looksLikeHtml) {
+      const withLinks = result
+        .replace(/(https?:\/\/[^\s)]+)|(www\.[^\s)]+)/gi, (url) => {
+          const href = url.startsWith("http") ? url : `https://${url}`;
+          return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="underline">${url}</a>`;
+        })
+        .split(/\n{2,}/)
+        .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
+        .join("");
+      html = withLinks;
+    }
+    return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+  }, [result]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -107,7 +126,7 @@ const Hero = () => {
             {!loading && result && (
               <section className="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <article className="p-6">
-                  <pre className="whitespace-pre-wrap break-words text-sm leading-relaxed">{result}</pre>
+                  <div className="space-y-3 leading-relaxed text-sm [&_a]:text-primary [&_a]:underline" dangerouslySetInnerHTML={{ __html: toHtml }} />
                 </article>
               </section>
             )}

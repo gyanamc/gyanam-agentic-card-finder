@@ -9,13 +9,12 @@ const Header = () => {
         <Link to="/" className="flex items-center gap-3" aria-label="Gyanam home">
           <img
             src={logo}
-            alt="Gyanam logo"
+            alt="Gyanam logo - bright blue wordmark"
             className="h-8 w-auto"
             loading="eager"
             fetchPriority="high"
             decoding="async"
           />
-          <span className="text-lg font-semibold tracking-tight">Gyanam</span>
         </Link>
         {/* Navigation removed as requested */}
         <div className="flex items-center gap-2">

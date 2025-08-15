@@ -1,30 +1,34 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import logo from "@/assets/gyanam-logo.png";
+import logo from "@/assets/logo-gradient.svg"; // Place your SVG file here
 
-const Header = () => {
+export default function Header() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-16 items-center justify-between">
-        <Link to="/" className="flex items-center gap-3" aria-label="Gyanam home">
-          <img
-            src={logo}
-            alt="Gyanam logo"
-            className="h-8 w-auto"
-            loading="eager"
-            fetchPriority="high"
-            decoding="async"
-          />
-          <span className="text-lg font-semibold tracking-tight">Gyanam</span>
+    <header className="flex items-center justify-between px-6 py-4 bg-background border-b">
+      {/* Logo + Site Name */}
+      <Link to="/" className="flex items-center space-x-2">
+        <img
+          src={logo}
+          alt="Gyanam Logo"
+          className="h-8 w-8 sm:h-10 sm:w-10"
+        />
+        <span className="text-xl font-bold tracking-tight">Gyanam</span>
+      </Link>
+
+      {/* Navigation Menu (keep existing or add new links) */}
+      <nav className="flex items-center space-x-6">
+        <Link
+          to="/about"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          About
         </Link>
-        {/* Navigation removed as requested */}
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" className="hidden sm:inline-flex">Log in</Button>
-          <Button variant="hero" size="sm">Sign up</Button>
-        </div>
-      </div>
+        <Link
+          to="/contact"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Contact
+        </Link>
+      </nav>
     </header>
   );
-};
-
-export default Header;
+}

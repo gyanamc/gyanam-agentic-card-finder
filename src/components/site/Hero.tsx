@@ -2,13 +2,56 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import DOMPurify from "dompurify";
-import logo from "@/assets/logo-gradient.svg"; // New logo import
+import logo from "@/assets/logo-gradient.svg"; // Ensure file exists
+
+const placeholderQuestions = [
+  "Tell me the best card for international travel",
+  "Which credit card has the best rewards?",
+  "Find me a card with no annual fees",
+  "Best card for online shopping in India",
+];
 
 const Hero = () => {
   const [query, setQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = React.useState(false);
+  const [typingStarted, setTypingStarted] = React.useState(false);
+
+  const startRotation = React.useCallback(() => {
+    let interval: NodeJS.Timeout;
+    const timeout = setTimeout(() => {
+      setPlaceholderVisible(true);
+      interval = setInterval(() => {
+        setPlaceholderVisible(false);
+        setTimeout(() => {
+          setPlaceholderIndex((prev) => (prev + 1) % placeholderQuestions.length);
+          setPlaceholderVisible(true);
+        }, 300);
+      }, 2000);
+    }, 1500);
+
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const cleanup = startRotation();
+    return cleanup;
+  }, [startRotation]);
+
+  // Restart placeholder when cleared
+  React.useEffect(() => {
+    if (query === "" && typingStarted) {
+      setTypingStarted(false);
+      const cleanup = startRotation();
+      return cleanup;
+    }
+  }, [query, typingStarted, startRotation]);
 
   const toHtml = React.useMemo(() => {
     if (!result) return "";
@@ -73,10 +116,8 @@ const Hero = () => {
         const msg = `Webhook error ${res.status}${text ? `: ${text}` : ""}`;
         setError(msg);
         toast.error(`Webhook error: ${res.status}`);
-        console.error("Webhook error:", res.status, text);
       }
     } catch (err) {
-      console.error(err);
       setError("Network error. Please try again.");
       toast.error("Network error");
     } finally {
@@ -88,12 +129,12 @@ const Hero = () => {
     <section className="relative isolate overflow-hidden">
       <div className="bg-hero">
         <div className="container mx-auto px-6 py-24 md:py-32 text-center">
-          
-          {/* LOGO ABOVE HEADING */}
+
+          {/* Logo */}
           <img
             src={logo}
             alt="Gyanam Agentic AI Logo"
-            className="mx-auto h-16 w-16 mb-6 sm:h-20 sm:w-20"
+            className="mx-auto mb-6 h-16 w-16 sm:h-20 sm:w-20"
           />
 
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-extrabold tracking-tight md:text-6xl">
@@ -102,8 +143,7 @@ const Hero = () => {
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
             No one will ask your phone number here since this is Agentic AI :)
           </p>
-          
-          {/* Search Form */}
+
           <div className="mt-10 flex items-center justify-center">
             <form
               role="search"
@@ -114,19 +154,32 @@ const Hero = () => {
               <Input
                 name="q"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search Gyanam..."
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  if (!typingStarted && e.target.value !== "") {
+                    setTypingStarted(true);
+                    setPlaceholderVisible(false);
+                  }
+                }}
+                placeholder={
+                  typingStarted
+                    ? ""
+                    : placeholderVisible
+                    ? placeholderQuestions[placeholderIndex]
+                    : ""
+                }
                 aria-label="Search"
                 autoFocus
                 autoComplete="on"
-                className="h-14 rounded-full px-6 text-base shadow-lg border-input bg-background focus-visible:ring-ring"
+                className={`h-14 rounded-full px-6 text-base shadow-lg border-input bg-background focus-visible:ring-ring transition-opacity duration-300 ${
+                  placeholderVisible ? "opacity-100" : "opacity-0"
+                }`}
                 disabled={loading}
               />
               <button type="submit" className="sr-only">Search</button>
             </form>
           </div>
 
-          {/* Search Results */}
           <div
             className="mx-auto mt-8 w-full max-w-3xl px-6 text-left"
             aria-live="polite"
@@ -134,7 +187,7 @@ const Hero = () => {
           >
             {loading && (
               <p className="text-sm text-muted-foreground">
-                Searching the best card for you.. just hold tight
+                Searching the best card for you... just hold tight
               </p>
             )}
             {!loading && error && (

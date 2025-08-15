@@ -2,26 +2,13 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/sonner";
 import DOMPurify from "dompurify";
-
-const defaultSuggestions = [
-  "tell me the best card for international travel",
-  "which card has the best rewards program",
-  "what’s the best card for fuel cashback",
-  "suggest a credit card for students",
-  "which credit card is best for online shopping"
-];
+import logo from "@/assets/logo-gradient.svg"; // New logo import
 
 const Hero = () => {
-  const [query, setQuery] = React.useState(defaultSuggestions[0]);
-  const [currentSuggestionIndex, setCurrentSuggestionIndex] = React.useState(0);
-  const [userTyping, setUserTyping] = React.useState(false);
-  const [hasInteracted, setHasInteracted] = React.useState(false);
-  const [fadeClass, setFadeClass] = React.useState("opacity-100");
+  const [query, setQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-  const [debouncing, setDebouncing] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
-  const [showResults, setShowResults] = React.useState(false);
 
   const toHtml = React.useMemo(() => {
     if (!result) return "";
@@ -41,11 +28,12 @@ const Hero = () => {
     return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
   }, [result]);
 
-  const runSearch = async (searchQuery: string) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
     setError(null);
     setResult(null);
-    setShowResults(false);
-    setDebouncing(false);
     try {
       setLoading(true);
       const res = await fetch(
@@ -53,7 +41,7 @@ const Hero = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: searchQuery }),
+          body: JSON.stringify({ query: q }),
         }
       );
       const contentType = res.headers.get("content-type") || "";
@@ -80,12 +68,12 @@ const Hero = () => {
         }
         setResult(dataText || "No results.");
         toast.success("Results received");
-        setTimeout(() => setShowResults(true), 50);
       } else {
         const text = await res.text();
         const msg = `Webhook error ${res.status}${text ? `: ${text}` : ""}`;
         setError(msg);
         toast.error(`Webhook error: ${res.status}`);
+        console.error("Webhook error:", res.status, text);
       }
     } catch (err) {
       console.error(err);
@@ -96,70 +84,26 @@ const Hero = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    runSearch(query.trim() || defaultSuggestions[0]);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setQuery(value);
-    if (value.trim() !== "" && value !== defaultSuggestions[currentSuggestionIndex]) {
-      setUserTyping(true);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!hasInteracted) {
-      setHasInteracted(true);
-      setUserTyping(true);
-      setQuery(""); // instantly clear the suggestion
-    }
-  };
-
-  // Auto-run default search
-  React.useEffect(() => {
-    runSearch(defaultSuggestions[0]);
-  }, []);
-
-  // Debounced search
-  React.useEffect(() => {
-    if (userTyping && query.trim().length >= 3) {
-      setDebouncing(true);
-      const delay = setTimeout(() => {
-        runSearch(query);
-      }, 2000);
-      return () => clearTimeout(delay);
-    }
-  }, [query, userTyping]);
-
-  // Cycle suggestions with fade
-  React.useEffect(() => {
-    if (userTyping) return;
-    const interval = setInterval(() => {
-      setFadeClass("opacity-0");
-      setTimeout(() => {
-        setCurrentSuggestionIndex((prev) => {
-          const nextIndex = (prev + 1) % defaultSuggestions.length;
-          setQuery(defaultSuggestions[nextIndex]);
-          return nextIndex;
-        });
-        setFadeClass("opacity-100");
-      }, 300); // fade out before switching
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [userTyping]);
-
   return (
     <section className="relative isolate overflow-hidden">
       <div className="bg-hero">
         <div className="container mx-auto px-6 py-24 md:py-32 text-center">
+          
+          {/* LOGO ABOVE HEADING */}
+          <img
+            src={logo}
+            alt="Gyanam Agentic AI Logo"
+            className="mx-auto h-16 w-16 mb-6 sm:h-20 sm:w-20"
+          />
+
           <h1 className="mx-auto max-w-3xl text-balance text-4xl font-extrabold tracking-tight md:text-6xl">
             Get the best <span className="text-gradient">Credit Card</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
             No one will ask your phone number here since this is Agentic AI :)
           </p>
+          
+          {/* Search Form */}
           <div className="mt-10 flex items-center justify-center">
             <form
               role="search"
@@ -170,77 +114,44 @@ const Hero = () => {
               <Input
                 name="q"
                 value={query}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                placeholder={defaultSuggestions[0]}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search Gyanam..."
                 aria-label="Search"
                 autoFocus
                 autoComplete="on"
-                className={`h-14 rounded-full px-6 text-base shadow-lg border-input bg-background focus-visible:ring-ring transition-opacity duration-300 ${fadeClass}`}
+                className="h-14 rounded-full px-6 text-base shadow-lg border-input bg-background focus-visible:ring-ring"
                 disabled={loading}
               />
               <button type="submit" className="sr-only">Search</button>
             </form>
           </div>
-          <div
-            className="mx-auto mt-8 w-full max-w-3xl px-6 text-left min-h-[1.5rem]"
-            aria-live="polite"
-            aria-busy={loading || debouncing}
-          >
-            {/* Crossfade debounce/loading */}
-            <div className="relative h-5">
-              <p
-                className={`absolute inset-0 text-sm text-muted-foreground transition-opacity duration-500 ${
-                  debouncing && !loading ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                Searching the best card for you… just hold tight
-              </p>
-              <p
-                className={`absolute inset-0 text-sm text-muted-foreground transition-opacity duration-500 ${
-                  loading ? "opacity-100" : "opacity-0"
-                }`}
-              >
-                Searching...
-              </p>
-            </div>
 
-            {/* Error */}
+          {/* Search Results */}
+          <div
+            className="mx-auto mt-8 w-full max-w-3xl px-6 text-left"
+            aria-live="polite"
+            aria-busy={loading}
+          >
+            {loading && (
+              <p className="text-sm text-muted-foreground">
+                Searching the best card for you.. just hold tight
+              </p>
+            )}
             {!loading && error && (
               <div
                 role="alert"
-                className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive transition-opacity duration-500"
+                className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
               >
                 {error}
               </div>
             )}
-
-            {/* Smooth cascade fade-in + blur reveal results */}
             {!loading && result && (
-              <section
-                className={`mt-2 rounded-lg border bg-card text-card-foreground shadow-sm transition-opacity duration-700 ease-out ${
-                  showResults ? "opacity-100" : "opacity-0"
-                }`}
-              >
+              <section className="rounded-lg border bg-card text-card-foreground shadow-sm">
                 <article className="p-6">
-                  {toHtml
-                    .split(/<\/p>|<br\s*\/?>/i)
-                    .filter((block) => block.trim() !== "")
-                    .map((block, i) => {
-                      const randomOffset = Math.floor(Math.random() * 60) - 30;
-                      return (
-                        <div
-                          key={i}
-                          className={`transition-all duration-700 ease-out ${
-                            showResults ? "opacity-100 blur-0" : "opacity-0 blur-sm"
-                          }`}
-                          style={{
-                            transitionDelay: `${i * 100 + randomOffset}ms`,
-                          }}
-                          dangerouslySetInnerHTML={{ __html: block + "</p>" }}
-                        />
-                      );
-                    })}
+                  <div
+                    className="space-y-3 leading-relaxed text-sm [&_a]:text-primary [&_a]:underline"
+                    dangerouslySetInnerHTML={{ __html: toHtml }}
+                  />
                 </article>
               </section>
             )}

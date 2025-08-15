@@ -1,0 +1,32 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>.solidFill{fill:#0056b3;stroke:#0056b3;stroke-width:24;}</style>
+  </defs>
+  
+  <!-- Chip Outline -->
+  <rect x="96" y="96" width="320" height="320" rx="8" ry="8" class="solidFill" fill="none"></rect>
+  
+  <!-- Chip Pins -->
+  <line x1="96" y1="144" x2="64" y2="144" class="solidFill"></line>
+  <line x1="96" y1="184" x2="64" y2="184" class="solidFill"></line>
+  <line x1="96" y1="224" x2="64" y2="224" class="solidFill"></line>
+  <line x1="96" y1="264" x2="64" y2="264" class="solidFill"></line>
+  
+  <line x1="416" y1="144" x2="448" y2="144" class="solidFill"></line>
+  <line x1="416" y1="184" x2="448" y2="184" class="solidFill"></line>
+  <line x1="416" y1="224" x2="448" y2="224" class="solidFill"></line>
+  <line x1="416" y1="264" x2="448" y2="264" class="solidFill"></line>
+  
+  <!-- Neural Nodes Inside -->
+  <circle cx="200" cy="200" r="30" fill="#0056b3"></circle>
+  <circle cx="312" cy="168" r="30" fill="#0056b3"></circle>
+  <circle cx="280" cy="280" r="30" fill="#0056b3"></circle>
+  
+  <!-- Connecting Lines -->
+  <line x1="200" y1="200" x2="312" y2="168" stroke="#0056b3" stroke-width="14" stroke-linecap="square"></line>
+  <line x1="200" y1="200" x2="280" y2="280" stroke="#0056b3" stroke-width="14" stroke-linecap="square"></line>
+  <line x1="312" y1="168" x2="280" y2="280" stroke="#0056b3" stroke-width="14" stroke-linecap="square"></line>
+  
+  <!-- Arrow -->
+  <polygon points="250,230 300,180 285,195 305,215" fill="#0056b3"></polygon>
+</svg>

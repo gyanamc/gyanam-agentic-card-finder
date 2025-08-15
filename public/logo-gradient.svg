@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradHybrid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#007BFF;stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:#00E5FF;stop-opacity:1"></stop>
+    </linearGradient>
+  </defs>
+  
+  <!-- Chip Outline -->
+  <rect x="96" y="96" width="320" height="320" rx="8" ry="8" stroke="url(#gradHybrid)" stroke-width="24" fill="none"></rect>
+  
+  <!-- Chip Pins -->
+  <line x1="96" y1="144" x2="64" y2="144" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  <line x1="96" y1="184" x2="64" y2="184" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  <line x1="96" y1="224" x2="64" y2="224" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  <line x1="96" y1="264" x2="64" y2="264" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  
+  <line x1="416" y1="144" x2="448" y2="144" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  <line x1="416" y1="184" x2="448" y2="184" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  <line x1="416" y1="224" x2="448" y2="224" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  <line x1="416" y1="264" x2="448" y2="264" stroke="url(#gradHybrid)" stroke-width="16"></line>
+  
+  <!-- Neural Nodes Inside -->
+  <circle cx="200" cy="200" r="30" fill="url(#gradHybrid)"></circle>
+  <circle cx="312" cy="168" r="30" fill="url(#gradHybrid)"></circle>
+  <circle cx="280" cy="280" r="30" fill="url(#gradHybrid)"></circle>
+  
+  <!-- Connecting Lines -->
+  <line x1="200" y1="200" x2="312" y2="168" stroke="url(#gradHybrid)" stroke-width="14" stroke-linecap="square"></line>
+  <line x1="200" y1="200" x2="280" y2="280" stroke="url(#gradHybrid)" stroke-width="14" stroke-linecap="square"></line>
+  <line x1="312" y1="168" x2="280" y2="280" stroke="url(#gradHybrid)" stroke-width="14" stroke-linecap="square"></line>
+  
+  <!-- Arrow -->
+  <polygon points="250,230 300,180 285,195 305,215" fill="url(#gradHybrid)"></polygon>
+</svg>

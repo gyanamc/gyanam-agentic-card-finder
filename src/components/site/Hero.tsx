@@ -1,166 +1,157 @@
-import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/sonner";
-import DOMPurify from "dompurify";
+"use client";
 
-const Hero = () => {
-  const rotatingSuggestions = [
-    "Tell me the best card for international travel",
-    "Which credit card gives maximum lounge access?",
+import { useState, useEffect } from "react";
+
+export default function Hero() {
+  const [input, setInput] = useState("");
+  const [placeholder, setPlaceholder] = useState("Best credit card for students");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("");
+  const [htmlResponse, setHtmlResponse] = useState(""); 
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [hasSearched, setHasSearched] = useState(false); // <-- toggle layout
+
+  // Suggestions for placeholder rotation
+  const suggestions = [
+    "Best credit card for students",
     "Best card for cashback on shopping",
-    "Which card has the lowest forex markup?",
+    "Best card for international travel",
+    "Best card for airport lounge access",
   ];
 
-  const [query, setQuery] = React.useState(rotatingSuggestions[0]);
-  const [loading, setLoading] = React.useState(false);
-  const [result, setResult] = React.useState<string | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
-  const [suggestedQuestions, setSuggestedQuestions] = React.useState<string[]>([]);
-
-  // Cycle placeholder suggestions
-  React.useEffect(() => {
-    let i = 0;
+  // Cycle suggestions only if input is empty and not yet searched
+  useEffect(() => {
+    if (input !== "" || hasSearched) return;
+    let index = 0;
     const interval = setInterval(() => {
-      i = (i + 1) % rotatingSuggestions.length;
-      setQuery(rotatingSuggestions[i]);
-    }, 4000); // every 4s
+      setPlaceholder(suggestions[index]);
+      index = (index + 1) % suggestions.length;
+    }, 3000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [input, hasSearched]);
 
-  const toHtml = React.useMemo(() => {
-    if (!result) return "";
-    return DOMPurify.sanitize(result, { USE_PROFILES: { html: true } });
-  }, [result]);
+  const handleSearch = async () => {
+    if (!input.trim()) return;
+    setLoading(true);
+    setStatus("Fetching results...");
+    setHtmlResponse("");
+    setHasSearched(true);
 
-  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>, overrideQuery?: string) => {
-    if (e) e.preventDefault();
-    const q = (overrideQuery ?? query).trim();
-    if (!q) return;
-
-    setError(null);
-    setResult(null);
-    setSuggestedQuestions([]);
     try {
-      setLoading(true);
-      const res = await fetch(
+      const response = await fetch(
         "https://primary-production-da3f.up.railway.app/webhook/gyanam.store",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body: { message: q } }),
+          body: JSON.stringify({ body: { message: input } }),
         }
       );
-      const contentType = res.headers.get("content-type") || "";
-      if (res.ok) {
-        let data: any;
-        if (contentType.includes("application/json")) {
-          data = await res.json();
-        } else {
-          data = { html: await res.text(), suggestedQuestions: [] };
-        }
 
-        setResult(data.html || "No results.");
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const data = await response.json();
+
+      if (data.html) {
+        setHtmlResponse(data.html);
+        setStatus("Results received");
         setSuggestedQuestions(data.suggestedQuestions || []);
-        toast.success("Results received");
       } else {
-        const text = await res.text();
-        setError(`Webhook error ${res.status}${text ? `: ${text}` : ""}`);
-        toast.error(`Webhook error: ${res.status}`);
+        setHtmlResponse("<p>Sorry, no answer found.</p>");
+        setStatus("No results found");
       }
-    } catch (err) {
-      console.error(err);
-      setError("Network error. Please try again.");
-      toast.error("Network error");
+    } catch (error) {
+      setHtmlResponse("<p>Network error. Please try again.</p>");
+      setStatus("Network error");
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle clicking a suggested question
+  const handleSuggestedClick = (question: string) => {
+    setInput(question);
+    handleSearch();
+  };
+
   return (
-    <section className="relative isolate overflow-hidden">
-      <div className="bg-hero">
-        <div className="container mx-auto px-6 py-24 md:py-32 text-center">
-          <h1 className="mx-auto max-w-3xl text-balance text-4xl font-extrabold tracking-tight md:text-6xl">
-            Get the best <span className="text-gradient drop-shadow-md">Credit Card</span>
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            No one will ask your phone number here since this is Agentic AI :)
-          </p>
+    <section className="flex flex-col items-center justify-start text-center px-6 py-10">
+      {/* Search bar container (position changes based on state) */}
+      <div
+        className={`w-full max-w-3xl transition-all duration-500 ${
+          hasSearched ? "mt-4" : "mt-24"
+        }`}
+      >
+        {/* Heading only before search */}
+        {!hasSearched && (
+          <>
+            <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
+              Get the best{" "}
+              <span className="text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]">
+                Credit Card
+              </span>
+            </h1>
+            <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+              No one will ask your phone number here since this is Agentic AI :)
+            </p>
+          </>
+        )}
 
-          {/* Search Bar */}
-          <div className="mt-10 flex items-center justify-center">
-            <form
-              role="search"
-              aria-label="Site search"
-              onSubmit={handleSubmit}
-              className="w-full max-w-2xl"
-            >
-              <Input
-                name="q"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search Gyanam..."
-                aria-label="Search"
-                autoFocus
-                autoComplete="on"
-                className="h-14 rounded-full px-6 text-base shadow-lg border-input bg-white text-black focus-visible:ring-ring"
-                disabled={loading}
-              />
-              <button type="submit" className="sr-only">
-                Search
-              </button>
-            </form>
-          </div>
-
-          {/* Results */}
-          <div
-            className="mx-auto mt-8 w-full max-w-3xl px-6 text-left"
-            aria-live="polite"
-            aria-busy={loading}
+        {/* Search Input */}
+        <div className="flex gap-2 items-center">
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onFocus={() => setInput("")}
+            className="flex-grow p-4 rounded-full border border-gray-300 text-black placeholder-gray-500 shadow-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={loading}
+            className="px-6 py-3 rounded-full bg-blue-500 text-white font-medium shadow-md hover:bg-blue-600 transition"
           >
-            {loading && (
-              <p className="text-sm text-muted-foreground">
-                Searching the best card for you... just hold tight
-              </p>
-            )}
-            {!loading && error && (
-              <div
-                role="alert"
-                className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-              >
-                {error}
-              </div>
-            )}
-            {!loading && result && (
-              <section className="rounded-lg border bg-card text-card-foreground shadow-sm">
-                <article className="p-6">
-                  <div
-                    className="space-y-3 leading-relaxed text-sm [&_a]:text-primary [&_a]:underline"
-                    dangerouslySetInnerHTML={{ __html: toHtml }}
-                  />
-                </article>
-              </section>
-            )}
-
-            {/* Suggested Questions */}
-            {!loading && suggestedQuestions.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {suggestedQuestions.map((q, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSubmit(undefined, q)}
-                    className="px-3 py-1 text-sm rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+            {loading ? "Searching..." : "Find my card"}
+          </button>
         </div>
       </div>
+
+      {/* Results Section */}
+      {hasSearched && (
+        <div className="mt-8 w-full max-w-3xl text-left">
+          {/* Status */}
+          {status && <p className="text-sm text-gray-400 mb-4">{status}</p>}
+
+          {/* Answer */}
+          {htmlResponse && (
+            <div
+              className="bg-white/10 p-6 rounded-lg shadow-lg text-white prose prose-invert"
+              dangerouslySetInnerHTML={{ __html: htmlResponse }}
+            />
+          )}
+
+          {/* Suggested follow-up questions */}
+          {suggestedQuestions.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-white mb-2">
+                You can also ask:
+              </h3>
+              <ul className="list-disc list-inside space-y-2 text-blue-300">
+                {suggestedQuestions.map((q, idx) => (
+                  <li
+                    key={idx}
+                    className="cursor-pointer hover:underline"
+                    onClick={() => handleSuggestedClick(q)}
+                  >
+                    {q}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
-};
-
-export default Hero;
+}

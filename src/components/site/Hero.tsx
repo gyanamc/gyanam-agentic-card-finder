@@ -14,15 +14,20 @@ const suggestions = [
 const Hero = () => {
   const [query, setQuery] = React.useState("");
   const [displayQuery, setDisplayQuery] = React.useState(suggestions[0]);
+  const [fade, setFade] = React.useState(true);
   const [index, setIndex] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Rotate suggestions every 4 seconds
+  // Rotate suggestions every 4 seconds with fade
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % suggestions.length);
+      setFade(false);
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % suggestions.length);
+        setFade(true);
+      }, 300); // fade-out before switching
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -134,7 +139,7 @@ const Hero = () => {
                 aria-label="Search"
                 autoFocus
                 autoComplete="off"
-                className="h-14 rounded-full px-6 text-base shadow-lg border border-gray-300 bg-white text-black placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-blue-300"
+                className={`h-14 rounded-full px-6 text-base shadow-lg border border-gray-300 bg-white text-black placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-blue-300 transition-opacity duration-300 ${fade ? "opacity-100" : "opacity-0"}`}
                 disabled={loading}
                 onFocus={() => setQuery("")} // clears when focusing
               />

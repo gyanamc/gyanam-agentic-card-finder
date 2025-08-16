@@ -58,7 +58,7 @@ const Hero = () => {
     try {
       setLoading(true);
       const res = await fetch(
-        "https://primary-production-da3f.up.railway.app/webhook/gyanam.store",
+        "https://primary-production-da3f.up.railway.app/webhook/credit-card-recommendation",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

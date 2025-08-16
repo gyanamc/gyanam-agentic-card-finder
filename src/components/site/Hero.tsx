@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 
 export default function Hero() {
   const [input, setInput] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [html, setHtml] = useState("");
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [resultsShown, setResultsShown] = useState(false);
 
-  const handleSearch = async () => {
-    if (!input.trim()) return;
-
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
-    setAnswer("");
+    setLoading(true);
+    setHtml("");
     setSuggestedQuestions([]);
 
     try {
@@ -27,81 +27,91 @@ export default function Hero() {
         }
       );
 
-      if (!response.ok) throw new Error("Network error");
+      let data: any;
+      const contentType = response.headers.get("content-type") || "";
 
-      const data = await response.json();
+      if (contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // fallback in case n8n responds with text/html
+        const text = await response.text();
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          throw new Error("Invalid response format from server");
+        }
+      }
 
-      setAnswer(data.html || "No answer found.");
-      setSuggestedQuestions(data.suggestedQuestions || []);
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setHtml(data.html || "");
+      setSuggestedQuestions(
+        Array.isArray(data.suggestedQuestions)
+          ? data.suggestedQuestions
+          : (data.suggestedQuestions || "").split(",")
+      );
+      setResultsShown(true);
+    } catch (err: any) {
+      setError(err.message || "Network error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <section className="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-white to-gray-50 px-6">
-      {/* Search Bar Section */}
-      <div className="w-full max-w-3xl mt-16 text-center">
-        {!answer && (
-          <>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-              Get the best{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 drop-shadow-md">
-                Credit Card
-              </span>
-            </h1>
-            <p className="text-gray-500 mb-8">
-              No one will ask your phone number here since this is Agentic AI :)
-            </p>
-          </>
-        )}
-
-        {/* Search Bar */}
-        <div className="flex items-center bg-white rounded-full shadow-lg p-2">
+    <section className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-white to-gray-50 px-6">
+      <div className={`w-full max-w-3xl transition-all ${resultsShown ? "mt-6" : "mt-24"}`}>
+        {/* Search Form */}
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center shadow-lg rounded-full overflow-hidden border border-gray-200"
+        >
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Ask me about the best credit card..."
-            className="flex-1 px-4 py-2 rounded-full focus:outline-none text-gray-700"
+            placeholder="Find the best credit card for you..."
+            className="flex-1 px-6 py-4 text-lg outline-none"
           />
           <button
-            onClick={handleSearch}
-            className="ml-2 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 font-semibold transition"
           >
             {loading ? "Searching..." : "Find my card"}
           </button>
-        </div>
-      </div>
+        </form>
 
-      {/* Results Section */}
-      <div className="w-full max-w-3xl mt-10 text-left">
-        {error && <p className="text-red-500">{error}</p>}
+        {/* Error Message */}
+        {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
 
-        {answer && (
-          <div
-            className="prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: answer }}
-          />
-        )}
+        {/* Results Section */}
+        {resultsShown && !error && (
+          <div className="mt-10 bg-white shadow-md rounded-xl p-6">
+            {/* AI Answer */}
+            {html && (
+              <div
+                className="prose max-w-none text-gray-800"
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
+            )}
 
-        {suggestedQuestions.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">You can also ask:</h3>
-            <ul className="list-disc list-inside space-y-1">
-              {suggestedQuestions.map((q, i) => (
-                <li
-                  key={i}
-                  className="cursor-pointer text-blue-600 hover:underline"
-                  onClick={() => setInput(q)}
-                >
-                  {q}
-                </li>
-              ))}
-            </ul>
+            {/* Suggested Questions */}
+            {suggestedQuestions.length > 0 && (
+              <div className="mt-6">
+                <h3 className="font-semibold text-gray-900 mb-3">
+                  You might also ask:
+                </h3>
+                <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  {suggestedQuestions.map((q, i) => (
+                    <li
+                      key={i}
+                      className="cursor-pointer hover:text-blue-600"
+                      onClick={() => setInput(q)}
+                    >
+                      {q}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>

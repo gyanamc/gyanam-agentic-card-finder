@@ -1,42 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Hero() {
   const [input, setInput] = useState("");
-  const [placeholder, setPlaceholder] = useState("Best credit card for students");
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState("");
-  const [htmlResponse, setHtmlResponse] = useState(""); 
+  const [answer, setAnswer] = useState("");
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
-  const [hasSearched, setHasSearched] = useState(false); // <-- toggle layout
-
-  // Suggestions for placeholder rotation
-  const suggestions = [
-    "Best credit card for students",
-    "Best card for cashback on shopping",
-    "Best card for international travel",
-    "Best card for airport lounge access",
-  ];
-
-  // Cycle suggestions only if input is empty and not yet searched
-  useEffect(() => {
-    if (input !== "" || hasSearched) return;
-    let index = 0;
-    const interval = setInterval(() => {
-      setPlaceholder(suggestions[index]);
-      index = (index + 1) % suggestions.length;
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [input, hasSearched]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSearch = async () => {
     if (!input.trim()) return;
+
     setLoading(true);
-    setStatus("Fetching results...");
-    setHtmlResponse("");
-    setHasSearched(true);
+    setError("");
+    setAnswer("");
+    setSuggestedQuestions([]);
 
     try {
       const response = await fetch(
@@ -48,69 +27,50 @@ export default function Hero() {
         }
       );
 
-      if (!response.ok) throw new Error("Network response was not ok");
+      if (!response.ok) throw new Error("Network error");
 
       const data = await response.json();
 
-      if (data.html) {
-        setHtmlResponse(data.html);
-        setStatus("Results received");
-        setSuggestedQuestions(data.suggestedQuestions || []);
-      } else {
-        setHtmlResponse("<p>Sorry, no answer found.</p>");
-        setStatus("No results found");
-      }
-    } catch (error) {
-      setHtmlResponse("<p>Network error. Please try again.</p>");
-      setStatus("Network error");
+      setAnswer(data.html || "No answer found.");
+      setSuggestedQuestions(data.suggestedQuestions || []);
+    } catch (err) {
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle clicking a suggested question
-  const handleSuggestedClick = (question: string) => {
-    setInput(question);
-    handleSearch();
-  };
-
   return (
-    <section className="flex flex-col items-center justify-start text-center px-6 py-10">
-      {/* Search bar container (position changes based on state) */}
-      <div
-        className={`w-full max-w-3xl transition-all duration-500 ${
-          hasSearched ? "mt-4" : "mt-24"
-        }`}
-      >
-        {/* Heading only before search */}
-        {!hasSearched && (
+    <section className="w-full min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-white to-gray-50 px-6">
+      {/* Search Bar Section */}
+      <div className="w-full max-w-3xl mt-16 text-center">
+        {!answer && (
           <>
-            <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
               Get the best{" "}
-              <span className="text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500 drop-shadow-md">
                 Credit Card
               </span>
             </h1>
-            <p className="text-gray-400 mb-8 max-w-xl mx-auto">
+            <p className="text-gray-500 mb-8">
               No one will ask your phone number here since this is Agentic AI :)
             </p>
           </>
         )}
 
-        {/* Search Input */}
-        <div className="flex gap-2 items-center">
+        {/* Search Bar */}
+        <div className="flex items-center bg-white rounded-full shadow-lg p-2">
           <input
             type="text"
-            placeholder={placeholder}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onFocus={() => setInput("")}
-            className="flex-grow p-4 rounded-full border border-gray-300 text-black placeholder-gray-500 shadow-lg focus:ring-2 focus:ring-blue-400 focus:outline-none"
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Ask me about the best credit card..."
+            className="flex-1 px-4 py-2 rounded-full focus:outline-none text-gray-700"
           />
           <button
             onClick={handleSearch}
-            disabled={loading}
-            className="px-6 py-3 rounded-full bg-blue-500 text-white font-medium shadow-md hover:bg-blue-600 transition"
+            className="ml-2 px-6 py-2 rounded-full bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
           >
             {loading ? "Searching..." : "Find my card"}
           </button>
@@ -118,40 +78,33 @@ export default function Hero() {
       </div>
 
       {/* Results Section */}
-      {hasSearched && (
-        <div className="mt-8 w-full max-w-3xl text-left">
-          {/* Status */}
-          {status && <p className="text-sm text-gray-400 mb-4">{status}</p>}
+      <div className="w-full max-w-3xl mt-10 text-left">
+        {error && <p className="text-red-500">{error}</p>}
 
-          {/* Answer */}
-          {htmlResponse && (
-            <div
-              className="bg-white/10 p-6 rounded-lg shadow-lg text-white prose prose-invert"
-              dangerouslySetInnerHTML={{ __html: htmlResponse }}
-            />
-          )}
+        {answer && (
+          <div
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: answer }}
+          />
+        )}
 
-          {/* Suggested follow-up questions */}
-          {suggestedQuestions.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-white mb-2">
-                You can also ask:
-              </h3>
-              <ul className="list-disc list-inside space-y-2 text-blue-300">
-                {suggestedQuestions.map((q, idx) => (
-                  <li
-                    key={idx}
-                    className="cursor-pointer hover:underline"
-                    onClick={() => handleSuggestedClick(q)}
-                  >
-                    {q}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
+        {suggestedQuestions.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-2">You can also ask:</h3>
+            <ul className="list-disc list-inside space-y-1">
+              {suggestedQuestions.map((q, i) => (
+                <li
+                  key={i}
+                  className="cursor-pointer text-blue-600 hover:underline"
+                  onClick={() => setInput(q)}
+                >
+                  {q}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </section>
   );
 }

@@ -54,7 +54,7 @@ const Hero: React.FC = () => {
   };
 
   return (
-    <section className="relative bg-gray-50 min-h-screen flex flex-col items-center pt-24 px-4">
+    <section className="relative bg-gray-50 min-h-screen flex flex-col">
       {/* Sticky Search Bar */}
       <div className="sticky top-0 z-10 bg-gray-50 w-full py-4 shadow-sm flex justify-center">
         <div className="flex w-full max-w-2xl gap-2">
@@ -76,35 +76,37 @@ const Hero: React.FC = () => {
         </div>
       </div>
 
-      {/* Centered Answer + Suggested Questions */}
-      <div className="flex flex-col items-center w-full max-w-3xl mt-12">
-        {response && (
-          <div className="w-full bg-white border rounded-lg p-6 shadow-sm whitespace-pre-wrap break-words">
-            <div
-              dangerouslySetInnerHTML={{ __html: response }}
-              className="prose max-w-none"
-            />
-          </div>
-        )}
+      {/* Centered Content (Answer + Suggestions) */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-3xl text-center">
+          {response && (
+            <div className="w-full bg-white border rounded-lg p-6 shadow-sm whitespace-pre-wrap break-words mb-6">
+              <div
+                dangerouslySetInnerHTML={{ __html: response }}
+                className="prose max-w-none text-left"
+              />
+            </div>
+          )}
 
-        {/* Suggested Questions */}
-        {suggested.length > 0 && (
-          <div className="w-full mt-6">
-            <h3 className="font-semibold mb-3">Suggested Questions</h3>
-            <ul className="list-disc list-inside space-y-2">
-              {suggested.map((s, idx) => (
-                <li key={idx}>
-                  <button
-                    onClick={() => handleAsk(s)}
-                    className="text-blue-600 hover:underline text-left"
-                  >
-                    {s}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          {/* Suggested Questions */}
+          {suggested.length > 0 && (
+            <div className="w-full text-left">
+              <h3 className="font-semibold mb-3">Suggested Questions</h3>
+              <ul className="list-disc list-inside space-y-2">
+                {suggested.map((s, idx) => (
+                  <li key={idx}>
+                    <button
+                      onClick={() => handleAsk(s)}
+                      className="text-blue-600 hover:underline text-left"
+                    >
+                      {s}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

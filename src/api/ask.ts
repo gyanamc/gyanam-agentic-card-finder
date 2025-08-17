@@ -1,61 +1,43 @@
 // src/api/ask.ts
 
-export interface AskResponse {
-  html: string;
-  suggestedQuestions: string[];
-}
+export async function askGyanam(query: string, onChunk: (text: string) => void) {
+  const response = await fetch("https://primary-production-da3f.up.railway.app/webhook/gyanam.store", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ query }),
+  });
 
-const WEBHOOK_URL =
-  "https://primary-production-da3f.up.railway.app/webhook/gyanam.store";
-
-/**
- * Sends a query to the backend webhook and returns structured data.
- */
-export async function ask(query: string): Promise<AskResponse> {
-  if (!query || query.trim().length === 0) {
-    throw new Error("Query cannot be empty.");
+  if (!response.body) {
+    throw new Error("No response body from server");
   }
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let buffer = "";
 
-    const response = await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query }),
-      signal: controller.signal,
-    });
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
 
-    clearTimeout(timeout);
+    buffer += decoder.decode(value, { stream: true });
 
-    if (!response.ok) {
-      throw new Error(
-        `Request failed with status ${response.status}: ${response.statusText}`
-      );
+    // split by newlines if n8n sends `\n\n` chunks
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() || "";
+
+    for (const part of parts) {
+      if (part.trim()) {
+        try {
+          const data = JSON.parse(part);
+          if (data.html) {
+            onChunk(data.html);
+          }
+        } catch (err) {
+          console.error("Error parsing stream chunk", err, part);
+        }
+      }
     }
-
-    let data: any;
-    try {
-      data = await response.json();
-    } catch {
-      throw new Error("Invalid JSON response from server.");
-    }
-
-    // Normalize
-    return {
-      html: data?.html ?? "<p>Sorry, I couldn’t generate an answer.</p>",
-      suggestedQuestions: Array.isArray(data?.suggestedQuestions)
-        ? data.suggestedQuestions
-        : [],
-    };
-  } catch (err: any) {
-    console.error("Error in ask.ts:", err);
-    return {
-      html: `<p style="color:red;">⚠️ ${err.message || "Something went wrong"}</p>`,
-      suggestedQuestions: [],
-    };
   }
 }

@@ -1,42 +1,55 @@
 // src/api/ask.ts
+export async function askGyanam(
+  question: string,
+  onChunk?: (chunk: string) => void
+): Promise<{ html: string; suggestedQuestions: string[] }> {
+  try {
+    const response = await fetch(
+      "https://primary-production-da3f.up.railway.app/webhook/gyanam.store",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      }
+    );
 
-export async function askGyanam(query: string, onChunk: (text: string) => void) {
-  const response = await fetch("https://primary-production-da3f.up.railway.app/webhook/gyanam.store", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ query }),
-  });
+    // If streaming is supported (ReadableStream exists)
+    if (response.body && response.body.getReader) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let result = "";
 
-  if (!response.body) {
-    throw new Error("No response body from server");
-  }
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder("utf-8");
-  let buffer = "";
+        const chunk = decoder.decode(value, { stream: true });
+        result += chunk;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-
-    const parts = buffer.split("\n\n");
-    buffer = parts.pop() || "";
-
-    for (const part of parts) {
-      if (part.trim()) {
-        try {
-          const data = JSON.parse(part);
-          if (data.html) {
-            onChunk(data.html);
-          }
-        } catch (err) {
-          console.error("Error parsing stream chunk", err, part);
+        if (onChunk) {
+          onChunk(chunk); // Pass chunk to Hero.tsx for typing effect
         }
       }
+
+      try {
+        return JSON.parse(result);
+      } catch {
+        return { html: result, suggestedQuestions: [] };
+      }
     }
+
+    // Fallback: parse full JSON
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      return { html: text, suggestedQuestions: [] };
+    }
+  } catch (error) {
+    console.error("askGyanam error:", error);
+    return {
+      html: `<p>⚠️ Something went wrong. Please try again later.</p>`,
+      suggestedQuestions: [],
+    };
   }
 }

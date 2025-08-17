@@ -53,3 +53,5 @@ export async function askGyanam(
     };
   }
 }
+export default ask;
+

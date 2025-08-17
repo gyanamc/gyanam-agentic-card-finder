@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { askGyanam } from "../../api/ask";
+import ask from "../../lib/ask";
 
 const Hero: React.FC = () => {
-  const [query, setQuery] = useState("");
-  const [response, setResponse] = useState("");
-  const [suggested, setSuggested] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // 🔄 Rotating placeholder
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const rotatingSuggestions = [
     "Which credit card has the lowest forex markup?",
     "Which card offers maximum airport lounge access?",
@@ -16,69 +9,85 @@ const Hero: React.FC = () => {
     "Which card gives the highest cashback on international spending?",
   ];
 
+  const [query, setQuery] = useState("");
+  const [placeholder, setPlaceholder] = useState(rotatingSuggestions[0]);
+  const [response, setResponse] = useState("");
+  const [suggested, setSuggested] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [index, setIndex] = useState(0);
+
+  // Cycle placeholder every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % rotatingSuggestions.length);
+      setIndex((prev) => (prev + 1) % rotatingSuggestions.length);
+      setPlaceholder(rotatingSuggestions[(index + 1) % rotatingSuggestions.length]);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [index]);
 
+  // Handle query submission
   const handleAsk = async (q?: string) => {
-    const finalQ = q || query || rotatingSuggestions[placeholderIndex];
-    if (!finalQ.trim()) return;
+    const finalQuery = q || query || placeholder;
+    if (!finalQuery.trim()) return;
 
     setLoading(true);
     setResponse("");
-    setQuery(finalQ);
+    setSuggested([]);
 
     try {
-      await askGyanam(finalQ, (chunk) => {
-        setResponse((prev) => prev + chunk);
-      }).then((res) => {
-        if (res.suggestedQuestions) {
-          setSuggested(res.suggestedQuestions);
-        }
-      });
-    } catch (error) {
-      setResponse("⚠️ Something went wrong. Please try again.");
+      const data = await ask(finalQuery);
+
+      if (data && Array.isArray(data) && data[0]) {
+        setResponse(data[0].html || "No answer found.");
+        setSuggested(data[0].suggestedQuestions || []);
+      } else {
+        setResponse("No answer found.");
+      }
+    } catch (err) {
+      console.error("Ask error:", err);
+      setResponse("Error fetching response. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAsk();
+      setQuery("");
     }
   };
 
   return (
-    <section className="relative bg-gray-50 min-h-screen flex flex-col">
+    <div className="w-full flex flex-col">
       {/* Sticky Search Bar */}
-      <div className="sticky top-0 z-10 bg-gray-50 w-full py-4 shadow-sm flex justify-center">
-        <div className="flex w-full max-w-2xl gap-2">
+      <div className="sticky top-0 bg-white shadow-md px-4 py-3 z-10">
+        <div className="max-w-3xl mx-auto flex gap-2">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder={rotatingSuggestions[placeholderIndex]} // 👈 placeholder only
-            className="flex-1 border rounded-lg px-4 py-2 text-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            onKeyDown={(e) => e.key === "Enter" && handleAsk()}
+            placeholder={placeholder}
+            className="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={() => handleAsk()}
             disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+            className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? "Thinking..." : "Ask"}
+            {loading ? "Asking..." : "Ask"}
+          </button>
+        </div>
+        {/* Clickable placeholder */}
+        <div className="text-center text-sm mt-2 text-gray-500">
+          <button
+            onClick={() => handleAsk(placeholder)}
+            className="italic underline hover:text-blue-600"
+          >
+            {placeholder}
           </button>
         </div>
       </div>
 
-      {/* Centered Content (Answer + Suggestions) */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4">
+      {/* Centered Content (Response + Suggested Questions) */}
+      <div className="flex-1 flex flex-col justify-center items-center px-4 py-10">
         <div className="w-full max-w-3xl text-center">
+          {/* Response Box */}
           {response && (
             <div className="w-full bg-white border rounded-lg p-6 shadow-sm whitespace-pre-wrap break-words mb-6">
               <div
@@ -108,7 +117,7 @@ const Hero: React.FC = () => {
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 

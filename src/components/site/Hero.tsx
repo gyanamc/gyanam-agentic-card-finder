@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import ask from "../../lib/ask";
+import ask from "../../api/ask";
+
 
 const Hero: React.FC = () => {
   const rotatingSuggestions = [

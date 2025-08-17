@@ -19,12 +19,12 @@ const Hero: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % rotatingSuggestions.length);
-    }, 3000); // change every 3s
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
   const handleAsk = async (q?: string) => {
-    const finalQ = q || query || rotatingSuggestions[placeholderIndex]; // 👈 fallback to rotating suggestion
+    const finalQ = q || query || rotatingSuggestions[placeholderIndex];
     if (!finalQ.trim()) return;
 
     setLoading(true);
@@ -63,7 +63,7 @@ const Hero: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder={rotatingSuggestions[placeholderIndex]} // 👈 rotating hint
+            placeholder={rotatingSuggestions[placeholderIndex]} // 👈 placeholder only
             className="flex-1 border rounded-lg px-4 py-2 text-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           />
           <button
@@ -76,34 +76,36 @@ const Hero: React.FC = () => {
         </div>
       </div>
 
-      {/* Answer Area */}
-      {response && (
-        <div className="w-full max-w-3xl mt-8 bg-white border rounded-lg p-6 shadow-sm whitespace-pre-wrap break-words">
-          <div
-            dangerouslySetInnerHTML={{ __html: response }}
-            className="prose max-w-none"
-          />
-        </div>
-      )}
+      {/* Centered Answer + Suggested Questions */}
+      <div className="flex flex-col items-center w-full max-w-3xl mt-12">
+        {response && (
+          <div className="w-full bg-white border rounded-lg p-6 shadow-sm whitespace-pre-wrap break-words">
+            <div
+              dangerouslySetInnerHTML={{ __html: response }}
+              className="prose max-w-none"
+            />
+          </div>
+        )}
 
-      {/* Suggested Questions */}
-      {suggested.length > 0 && (
-        <div className="w-full max-w-3xl mt-6">
-          <h3 className="font-semibold mb-3">Suggested Questions</h3>
-          <ul className="list-disc list-inside space-y-2">
-            {suggested.map((s, idx) => (
-              <li key={idx}>
-                <button
-                  onClick={() => handleAsk(s)}
-                  className="text-blue-600 hover:underline text-left"
-                >
-                  {s}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {/* Suggested Questions */}
+        {suggested.length > 0 && (
+          <div className="w-full mt-6">
+            <h3 className="font-semibold mb-3">Suggested Questions</h3>
+            <ul className="list-disc list-inside space-y-2">
+              {suggested.map((s, idx) => (
+                <li key={idx}>
+                  <button
+                    onClick={() => handleAsk(s)}
+                    className="text-blue-600 hover:underline text-left"
+                  >
+                    {s}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </section>
   );
 };

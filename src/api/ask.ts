@@ -1,57 +1,37 @@
 // src/api/ask.ts
-export async function askGyanam(
-  question: string,
-  onChunk?: (chunk: string) => void
-): Promise<{ html: string; suggestedQuestions: string[] }> {
+
+export type AskResponse = {
+  html: string;
+  suggestedQuestions: string[];
+};
+
+async function ask(query: string): Promise<AskResponse> {
   try {
-    const response = await fetch(
-      "https://primary-production-da3f.up.railway.app/webhook/gyanam.store",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      }
-    );
+    const response = await fetch("https://your-n8n-domain.com/webhook/ask", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    });
 
-    // If streaming is supported (ReadableStream exists)
-    if (response.body && response.body.getReader) {
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder("utf-8");
-      let result = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        result += chunk;
-
-        if (onChunk) {
-          onChunk(chunk); // Pass chunk to Hero.tsx for typing effect
-        }
-      }
-
-      try {
-        return JSON.parse(result);
-      } catch {
-        return { html: result, suggestedQuestions: [] };
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
     }
 
-    // Fallback: parse full JSON
-    const text = await response.text();
-    try {
-      return JSON.parse(text);
-    } catch {
-      return { html: text, suggestedQuestions: [] };
-    }
-  } catch (error) {
-    console.error("askGyanam error:", error);
+    const data = await response.json();
     return {
-      html: `<p>⚠️ Something went wrong. Please try again later.</p>`,
+      html: data[0]?.html || "<p>No response received</p>",
+      suggestedQuestions: data[0]?.suggestedQuestions || [],
+    };
+  } catch (error) {
+    console.error("❌ Error in ask.ts:", error);
+    return {
+      html: "<p>Sorry, something went wrong.</p>",
       suggestedQuestions: [],
     };
   }
 }
-export default ask;
 
+// ✅ Default export so Hero.tsx works
+export default ask;

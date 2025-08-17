@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { askGyanam } from "../../api/ask";
 
 const Hero: React.FC = () => {
@@ -7,17 +7,33 @@ const Hero: React.FC = () => {
   const [suggested, setSuggested] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // 🔄 Rotating placeholder
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const rotatingSuggestions = [
+    "Which credit card has the lowest forex markup?",
+    "Which card offers maximum airport lounge access?",
+    "What is the best card for frequent hotel stays?",
+    "Which card gives the highest cashback on international spending?",
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % rotatingSuggestions.length);
+    }, 3000); // change every 3s
+    return () => clearInterval(interval);
+  }, []);
+
   const handleAsk = async (q?: string) => {
-    const finalQ = q || query;
+    const finalQ = q || query || rotatingSuggestions[placeholderIndex]; // 👈 fallback to rotating suggestion
     if (!finalQ.trim()) return;
 
     setLoading(true);
-    setResponse(""); // reset output
+    setResponse("");
     setQuery(finalQ);
 
     try {
       await askGyanam(finalQ, (chunk) => {
-        setResponse((prev) => prev + chunk); // typing effect
+        setResponse((prev) => prev + chunk);
       }).then((res) => {
         if (res.suggestedQuestions) {
           setSuggested(res.suggestedQuestions);
@@ -30,16 +46,24 @@ const Hero: React.FC = () => {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAsk();
+    }
+  };
+
   return (
     <section className="relative bg-gray-50 min-h-screen flex flex-col items-center pt-24 px-4">
-      {/* Search Bar */}
+      {/* Sticky Search Bar */}
       <div className="sticky top-0 z-10 bg-gray-50 w-full py-4 shadow-sm flex justify-center">
         <div className="flex w-full max-w-2xl gap-2">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ask about credit cards..."
+            onKeyDown={handleKeyPress}
+            placeholder={rotatingSuggestions[placeholderIndex]} // 👈 rotating hint
             className="flex-1 border rounded-lg px-4 py-2 text-lg shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
           />
           <button
@@ -52,21 +76,15 @@ const Hero: React.FC = () => {
         </div>
       </div>
 
-      {/* Chatbot Response */}
-      <div className="w-full max-w-3xl mt-8">
-        <div className="bg-white border rounded-lg p-6 shadow-sm min-h-[150px] whitespace-pre-wrap break-words">
-          {response ? (
-            <div
-              dangerouslySetInnerHTML={{ __html: response }}
-              className="prose max-w-none"
-            />
-          ) : (
-            <p className="text-gray-400 italic">
-              Ask me anything about the best credit cards ✨
-            </p>
-          )}
+      {/* Answer Area */}
+      {response && (
+        <div className="w-full max-w-3xl mt-8 bg-white border rounded-lg p-6 shadow-sm whitespace-pre-wrap break-words">
+          <div
+            dangerouslySetInnerHTML={{ __html: response }}
+            className="prose max-w-none"
+          />
         </div>
-      </div>
+      )}
 
       {/* Suggested Questions */}
       {suggested.length > 0 && (

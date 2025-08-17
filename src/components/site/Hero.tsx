@@ -1,107 +1,94 @@
-"use client";
+// src/components/Hero.tsx
+import React, { useState } from "react";
+import { ask } from "../api/ask";
 
-import { useState } from "react";
-
-export default function Hero() {
+const Hero: React.FC = () => {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
-  const [suggested, setSuggested] = useState<string[]>([]);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const handleAsk = async (q?: string) => {
-    const question = q || query;
-    if (!question.trim()) return;
+  const handleAsk = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!query.trim()) return;
 
     setLoading(true);
+    setAnswer(null);
     setError(null);
 
     try {
-      const res = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: question }),
-      });
-
-      if (!res.ok) throw new Error("Network error");
-
-      const data = await res.json();
-
-      // Expecting: [{ html: "...", suggestedQuestions: [...] }]
-      const payload = Array.isArray(data) ? data[0] : data;
-
-      setAnswer(payload.html || "");
-      setSuggested(payload.suggestedQuestions || []);
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong, please try again.");
+      const result = await ask(query);
+      setAnswer(result.html);
+      setSuggestedQuestions(result.suggestedQuestions || []);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+    handleAsk(); // automatically search on click
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex flex-col">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       {/* Sticky Search Bar */}
-      <header
-        className={`w-full bg-white shadow-sm transition-all ${
-          answer ? "sticky top-0 z-10" : "mt-32"
-        }`}
-      >
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-2">
+      <div className="sticky top-0 z-10 bg-white shadow-md p-4">
+        <form onSubmit={handleAsk} className="flex w-full max-w-3xl mx-auto">
           <input
             type="text"
-            placeholder="Ask me anything..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAsk()}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Ask me anything about credit cards..."
+            className="flex-grow px-4 py-2 rounded-l-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
-            onClick={() => handleAsk()}
+            type="submit"
             disabled={loading}
-            className="px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50"
+            className="bg-indigo-600 text-white px-6 py-2 rounded-r-md hover:bg-indigo-700 disabled:opacity-50"
           >
-            Ask
+            {loading ? "Thinking..." : "Ask"}
           </button>
-        </div>
-      </header>
+        </form>
+      </div>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-3xl mx-auto px-4 py-6">
-        {loading && <p className="text-gray-500">Loading...</p>}
-
-        {error && <p className="text-red-500">{error}</p>}
+      <div className="flex-grow max-w-3xl mx-auto p-6 w-full">
+        {error && (
+          <p className="text-red-600 mb-4">
+            ⚠️ {error}
+          </p>
+        )}
 
         {answer && (
           <div
-            className="prose prose-indigo max-w-none mb-6"
+            className="prose prose-indigo bg-white p-6 rounded-lg shadow-md"
             dangerouslySetInnerHTML={{ __html: answer }}
           />
         )}
 
-        {suggested.length > 0 && (
+        {suggestedQuestions.length > 0 && (
           <div className="mt-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-2">
-              Suggested questions:
-            </h3>
+            <h3 className="text-lg font-semibold mb-2">Suggested Questions</h3>
             <div className="flex flex-wrap gap-2">
-              {suggested.map((s, i) => (
+              {suggestedQuestions.map((q, idx) => (
                 <button
-                  key={i}
-                  onClick={() => {
-                    setQuery(s);
-                    handleAsk(s);
-                  }}
-                  className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-700"
+                  key={idx}
+                  onClick={() => handleSuggestionClick(q)}
+                  className="px-3 py-1 bg-gray-200 rounded-full hover:bg-gray-300 text-sm"
                 >
-                  {s}
+                  {q}
                 </button>
               ))}
             </div>
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
-}
+};
+
+export default Hero;

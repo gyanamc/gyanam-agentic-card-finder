@@ -23,7 +23,6 @@ export async function askGyanam(query: string, onChunk: (text: string) => void) 
 
     buffer += decoder.decode(value, { stream: true });
 
-    // split by newlines if n8n sends `\n\n` chunks
     const parts = buffer.split("\n\n");
     buffer = parts.pop() || "";
 

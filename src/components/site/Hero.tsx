@@ -1,107 +1,107 @@
 "use client";
+
 import { useState } from "react";
 
 export default function Hero() {
   const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [suggested, setSuggested] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [suggested, setSuggested] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  async function handleSearch(q?: string) {
+  const handleAsk = async (q?: string) => {
     const question = q || query;
     if (!question.trim()) return;
 
     setLoading(true);
-    setError("");
-    setAnswer("");
-    setSuggested([]);
+    setError(null);
 
     try {
-      const res = await fetch(
-        "https://primary-production-da3f.up.railway.app/webhook/gyanam.store",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: question }),
-        }
-      );
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: question }),
+      });
 
       if (!res.ok) throw new Error("Network error");
 
       const data = await res.json();
 
-      setAnswer(data.html || "No answer found.");
-      setSuggested(data.suggestedQuestions || []);
-    } catch (err: any) {
+      // Expecting: [{ html: "...", suggestedQuestions: [...] }]
+      const payload = Array.isArray(data) ? data[0] : data;
+
+      setAnswer(payload.html || "");
+      setSuggested(payload.suggestedQuestions || []);
+    } catch (err) {
       console.error(err);
-      setError("Network error, please try again.");
+      setError("Something went wrong, please try again.");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex flex-col items-center px-4 py-12">
-      {/* Search box */}
-      <div
-        className={`w-full max-w-2xl transition-all duration-300 ${
-          answer ? "mt-4" : "mt-32"
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex flex-col">
+      {/* Sticky Search Bar */}
+      <header
+        className={`w-full bg-white shadow-sm transition-all ${
+          answer ? "sticky top-0 z-10" : "mt-32"
         }`}
       >
-        <div className="flex items-center gap-2">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-2">
           <input
             type="text"
-            placeholder="Ask about the best credit card..."
+            placeholder="Ask me anything..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyDown={(e) => e.key === "Enter" && handleAsk()}
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
-            onClick={() => handleSearch()}
+            onClick={() => handleAsk()}
             disabled={loading}
-            className="px-5 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+            className="px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50"
           >
-            {loading ? "Searching..." : "Find my card"}
+            Ask
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Answer section */}
-      {error && (
-        <p className="mt-6 text-red-600 font-medium">{error}</p>
-      )}
+      {/* Main Content */}
+      <main className="flex-1 max-w-3xl mx-auto px-4 py-6">
+        {loading && <p className="text-gray-500">Loading...</p>}
 
-      {answer && !error && (
-        <div className="mt-8 w-full max-w-2xl text-gray-800">
+        {error && <p className="text-red-500">{error}</p>}
+
+        {answer && (
           <div
-            className="prose max-w-none"
+            className="prose prose-indigo max-w-none mb-6"
             dangerouslySetInnerHTML={{ __html: answer }}
           />
-        </div>
-      )}
+        )}
 
-      {/* Suggested questions */}
-      {suggested.length > 0 && (
-        <div className="mt-6 w-full max-w-2xl">
-          <p className="font-semibold mb-2">You might also ask:</p>
-          <ul className="list-disc list-inside space-y-2">
-            {suggested.map((q, i) => (
-              <li
-                key={i}
-                className="cursor-pointer text-blue-600 hover:underline"
-                onClick={() => {
-                  setQuery(q);
-                  handleSearch(q);
-                }}
-              >
-                {q}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {suggested.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">
+              Suggested questions:
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {suggested.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setQuery(s);
+                    handleAsk(s);
+                  }}
+                  className="px-3 py-1 rounded-full bg-gray-100 text-sm text-gray-700 hover:bg-indigo-100 hover:text-indigo-700"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 // src/components/site/Hero.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ask from "../../api/ask";
 
 const rotatingSuggestions = [
@@ -9,12 +9,25 @@ const rotatingSuggestions = [
   "Which card gives the highest cashback on international spending?",
 ];
 
+// Configurable typing speed (ms per word)
+const TYPING_SPEEDS = {
+  fast: 25,
+  medium: 50,
+  slow: 100,
+};
+
 const Hero: React.FC = () => {
   const [query, setQuery] = useState("");
   const [placeholder, setPlaceholder] = useState(rotatingSuggestions[0]);
-  const [answer, setAnswer] = useState("");
+  const [answer, setAnswer] = useState(""); // final full HTML
+  const [displayedAnswer, setDisplayedAnswer] = useState(""); // progressive HTML typing
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [typingSpeed, setTypingSpeed] = useState<keyof typeof TYPING_SPEEDS>("medium");
+
+  // Refs
+  const answerRef = useRef<HTMLDivElement | null>(null);
+  const topRef = useRef<HTMLDivElement | null>(null);
 
   // Rotate placeholder suggestions
   useEffect(() => {
@@ -27,83 +40,168 @@ const Hero: React.FC = () => {
   }, []);
 
   const handleAsk = async (customQuery?: string) => {
-    const q = customQuery || query || placeholder; // fallback to rotating suggestion
+    const q = customQuery || query || placeholder;
     if (!q) return;
 
     setLoading(true);
     setAnswer("");
+    setDisplayedAnswer("");
     setSuggestedQuestions([]);
 
-    const response = await ask(q);
+    try {
+      const response = await ask(q);
+      setAnswer(response.html);
+      setSuggestedQuestions(response.suggestedQuestions);
 
-    setAnswer(response.html);
-    setSuggestedQuestions(response.suggestedQuestions);
+      // ---- Typing effect with HTML preserved ----
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = response.html;
+      const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null);
+      const textNodes: Text[] = [];
+      while (walker.nextNode()) {
+        textNodes.push(walker.currentNode as Text);
+      }
+
+      let nodeIndex = 0;
+      let wordIndex = 0;
+      let currentHTML = tempDiv.innerHTML;
+
+      // Clone DOM to manipulate progressively
+      const liveDiv = document.createElement("div");
+      liveDiv.innerHTML = response.html;
+      textNodes.forEach((node) => {
+        if (node.nodeValue) node.nodeValue = ""; // clear all text first
+      });
+
+      const interval = setInterval(() => {
+        if (nodeIndex < textNodes.length) {
+          const originalWords = (walker.root.childNodes[nodeIndex]?.textContent || "").split(" ");
+          if (wordIndex < originalWords.length) {
+            textNodes[nodeIndex].nodeValue += (wordIndex > 0 ? " " : "") + originalWords[wordIndex];
+            wordIndex++;
+          } else {
+            nodeIndex++;
+            wordIndex = 0;
+          }
+          setDisplayedAnswer(liveDiv.innerHTML);
+        } else {
+          clearInterval(interval);
+          setDisplayedAnswer(response.html); // final clean HTML
+        }
+      }, TYPING_SPEEDS[typingSpeed]);
+
+      // Smooth scroll to answer
+      setTimeout(() => {
+        if (answerRef.current) {
+          answerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 200);
+    } catch (err) {
+      setAnswer("<p>Sorry, something went wrong.</p>");
+      setDisplayedAnswer("Sorry, something went wrong.");
+      setSuggestedQuestions([]);
+    }
+
     setLoading(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleAsk();
-    }
+  const resetAsk = () => {
+    setAnswer("");
+    setDisplayedAnswer("");
+    setQuery("");
+    setSuggestedQuestions([]);
+
+    // Scroll back to top
+    setTimeout(() => {
+      if (topRef.current) {
+        topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
   };
 
   return (
-    <section className="relative flex flex-col items-center justify-center min-h-screen px-4 py-16 text-center">
-      {/* Sticky Search Bar */}
-      <div className="sticky top-0 bg-white w-full max-w-2xl mx-auto z-10 shadow-md rounded-lg p-4">
-        <h1 className="text-3xl font-bold mb-4">Find Your Best Credit Card</h1>
-
-        <div className="flex">
+    <div
+      ref={topRef}
+      className="hero flex flex-col items-center justify-center p-6 transition-all duration-500 ease-in-out"
+    >
+      {!answer ? (
+        <div
+          className="w-full max-w-xl flex flex-col gap-3 animate-fadeIn"
+          key="input-section"
+        >
+          {/* Search Input */}
           <input
             type="text"
-            className="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none"
-            placeholder={placeholder}
             value={query}
+            placeholder={placeholder}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
+            className="border rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
           <button
             onClick={() => handleAsk()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700"
+            disabled={loading}
+            className="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700 disabled:opacity-50 transition"
           >
-            Ask
+            {loading ? "Thinking..." : "Ask"}
           </button>
+
+          {/* Typing speed selector */}
+          <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
+            <span>Typing speed:</span>
+            {Object.keys(TYPING_SPEEDS).map((speed) => (
+              <button
+                key={speed}
+                onClick={() => setTypingSpeed(speed as keyof typeof TYPING_SPEEDS)}
+                className={`px-2 py-1 rounded-md border transition ${
+                  typingSpeed === speed
+                    ? "bg-blue-600 text-white border-blue-600"
+                    : "bg-white hover:bg-gray-100 border-gray-300"
+                }`}
+              >
+                {speed}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div
+          ref={answerRef}
+          className="w-full max-w-2xl flex flex-col gap-6 animate-fadeIn"
+          key="answer-section"
+        >
+          {/* Animated answer (HTML preserved) */}
+          <div
+            className="answer prose max-w-none p-4 border rounded-md bg-gray-50 shadow-sm animate-slideUp whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: displayedAnswer }}
+          />
 
-      {/* Response Section */}
-      <div className="flex flex-col items-center justify-center flex-grow w-full mt-8">
-        {loading && <p className="text-gray-500">Thinking...</p>}
-
-        {answer && (
-          <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-3xl text-left">
-            <div
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: answer }}
-            />
-          </div>
-        )}
-
-        {/* Suggested Questions */}
-        {suggestedQuestions.length > 0 && (
-          <div className="mt-6 w-full max-w-2xl text-left">
-            <h3 className="font-semibold mb-2">Suggested Questions:</h3>
-            <ul className="list-disc pl-5 space-y-2">
+          {/* Clickable suggested questions styled as chips */}
+          {suggestedQuestions.length > 0 && (
+            <div className="flex flex-wrap gap-2 animate-fadeIn delay-200">
               {suggestedQuestions.map((q, i) => (
-                <li key={i}>
-                  <button
-                    onClick={() => handleAsk(q)}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {q}
-                  </button>
-                </li>
+                <button
+                  key={i}
+                  onClick={() => handleAsk(q)}
+                  className="px-4 py-2 text-sm rounded-full border border-gray-300 bg-white shadow-sm hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition"
+                >
+                  {q}
+                </button>
               ))}
-            </ul>
+            </div>
+          )}
+
+          {/* Back to Ask button */}
+          <div>
+            <button
+              onClick={resetAsk}
+              className="mt-4 px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition"
+            >
+              ← Back to Ask
+            </button>
           </div>
-        )}
-      </div>
-    </section>
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -1,5 +1,4 @@
 // src/api/ask.ts
-
 export type AskResponse = {
   html: string;
   suggestedQuestions: string[];
@@ -20,9 +19,13 @@ async function ask(query: string): Promise<AskResponse> {
     }
 
     const data = await response.json();
+
+    // Handle both object and array formats
+    const payload = Array.isArray(data) ? data[0] : data;
+
     return {
-      html: data[0]?.html || "<p>No response received</p>",
-      suggestedQuestions: data[0]?.suggestedQuestions || [],
+      html: payload?.html || "<p>No response received</p>",
+      suggestedQuestions: payload?.suggestedQuestions || [],
     };
   } catch (error) {
     console.error("❌ Error in ask.ts:", error);
@@ -33,5 +36,4 @@ async function ask(query: string): Promise<AskResponse> {
   }
 }
 
-// ✅ Default export so Hero.tsx works
 export default ask;

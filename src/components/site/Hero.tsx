@@ -9,12 +9,8 @@ const rotatingSuggestions = [
   "Which card gives the highest cashback on international spending?",
 ];
 
-// Configurable typing speed (ms per word)
-const TYPING_SPEEDS = {
-  fast: 25,
-  medium: 50,
-  slow: 100,
-};
+// Fixed typing speed (ms per word)
+const TYPING_SPEED = 50;
 
 const Hero: React.FC = () => {
   const [query, setQuery] = useState("");
@@ -23,7 +19,6 @@ const Hero: React.FC = () => {
   const [displayedAnswer, setDisplayedAnswer] = useState(""); // progressive HTML typing
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [typingSpeed, setTypingSpeed] = useState<keyof typeof TYPING_SPEEDS>("medium");
 
   // Refs
   const answerRef = useRef<HTMLDivElement | null>(null);
@@ -64,9 +59,7 @@ const Hero: React.FC = () => {
 
       let nodeIndex = 0;
       let wordIndex = 0;
-      let currentHTML = tempDiv.innerHTML;
 
-      // Clone DOM to manipulate progressively
       const liveDiv = document.createElement("div");
       liveDiv.innerHTML = response.html;
       textNodes.forEach((node) => {
@@ -88,7 +81,7 @@ const Hero: React.FC = () => {
           clearInterval(interval);
           setDisplayedAnswer(response.html); // final clean HTML
         }
-      }, TYPING_SPEEDS[typingSpeed]);
+      }, TYPING_SPEED);
 
       // Smooth scroll to answer
       setTimeout(() => {
@@ -144,24 +137,6 @@ const Hero: React.FC = () => {
           >
             {loading ? "Thinking..." : "Ask"}
           </button>
-
-          {/* Typing speed selector */}
-          <div className="flex items-center gap-3 mt-2 text-sm text-gray-600">
-            <span>Typing speed:</span>
-            {Object.keys(TYPING_SPEEDS).map((speed) => (
-              <button
-                key={speed}
-                onClick={() => setTypingSpeed(speed as keyof typeof TYPING_SPEEDS)}
-                className={`px-2 py-1 rounded-md border transition ${
-                  typingSpeed === speed
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "bg-white hover:bg-gray-100 border-gray-300"
-                }`}
-              >
-                {speed}
-              </button>
-            ))}
-          </div>
         </div>
       ) : (
         <div

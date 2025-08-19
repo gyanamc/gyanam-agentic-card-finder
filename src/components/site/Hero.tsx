@@ -9,22 +9,19 @@ const rotatingSuggestions = [
   "Which card gives the highest cashback on international spending?",
 ];
 
-// Fixed typing speed (ms per word)
-const TYPING_SPEED = 50;
+const TYPING_SPEED = 50; // ms per word
 
 const Hero: React.FC = () => {
   const [query, setQuery] = useState("");
   const [placeholder, setPlaceholder] = useState(rotatingSuggestions[0]);
-  const [answer, setAnswer] = useState(""); // final full HTML
-  const [displayedAnswer, setDisplayedAnswer] = useState(""); // progressive HTML typing
+  const [answer, setAnswer] = useState(""); // full HTML
+  const [displayedAnswer, setDisplayedAnswer] = useState(""); // progressive typing
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Refs
   const answerRef = useRef<HTMLDivElement | null>(null);
-  const topRef = useRef<HTMLDivElement | null>(null);
 
-  // Rotate placeholder suggestions
+  // rotate placeholder
   useEffect(() => {
     let index = 0;
     const interval = setInterval(() => {
@@ -48,29 +45,25 @@ const Hero: React.FC = () => {
       setAnswer(response.html);
       setSuggestedQuestions(response.suggestedQuestions);
 
-      // ---- Typing effect with HTML preserved ----
+      // ---- typing effect ----
       const tempDiv = document.createElement("div");
       tempDiv.innerHTML = response.html;
-      const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null);
+      const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
       const textNodes: Text[] = [];
-      while (walker.nextNode()) {
-        textNodes.push(walker.currentNode as Text);
-      }
+      while (walker.nextNode()) textNodes.push(walker.currentNode as Text);
 
-      let nodeIndex = 0;
-      let wordIndex = 0;
+      let nodeIndex = 0, wordIndex = 0;
 
       const liveDiv = document.createElement("div");
       liveDiv.innerHTML = response.html;
-      textNodes.forEach((node) => {
-        if (node.nodeValue) node.nodeValue = ""; // clear all text first
-      });
+      textNodes.forEach((n) => (n.nodeValue = "")); // clear all text
 
       const interval = setInterval(() => {
         if (nodeIndex < textNodes.length) {
-          const originalWords = (walker.root.childNodes[nodeIndex]?.textContent || "").split(" ");
-          if (wordIndex < originalWords.length) {
-            textNodes[nodeIndex].nodeValue += (wordIndex > 0 ? " " : "") + originalWords[wordIndex];
+          const words = (response.html.split(/\s+/));
+          if (wordIndex < words.length) {
+            textNodes[nodeIndex].nodeValue +=
+              (wordIndex > 0 ? " " : "") + words[wordIndex];
             wordIndex++;
           } else {
             nodeIndex++;
@@ -79,54 +72,51 @@ const Hero: React.FC = () => {
           setDisplayedAnswer(liveDiv.innerHTML);
         } else {
           clearInterval(interval);
-          setDisplayedAnswer(response.html); // final clean HTML
+          setDisplayedAnswer(response.html);
         }
       }, TYPING_SPEED);
 
-      // Smooth scroll to answer
       setTimeout(() => {
-        if (answerRef.current) {
-          answerRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        answerRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 200);
-    } catch (err) {
+    } catch {
       setAnswer("<p>Sorry, something went wrong.</p>");
       setDisplayedAnswer("Sorry, something went wrong.");
-      setSuggestedQuestions([]);
     }
-
     setLoading(false);
-  };
-
-  const resetAsk = () => {
-    setAnswer("");
-    setDisplayedAnswer("");
     setQuery("");
-    setSuggestedQuestions([]);
-
-    // Scroll back to top
-    setTimeout(() => {
-      if (topRef.current) {
-        topRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 100);
   };
 
   return (
-    <div
-      ref={topRef}
-      className="hero flex flex-col items-center justify-center p-6 transition-all duration-500 ease-in-out"
-    >
-      {!answer ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAsk();
-          }}
-          className="w-full max-w-xl flex flex-col gap-3 animate-fadeIn"
-          key="input-section"
-        >
-          {/* Search Input (ChatGPT style) */}
+    <div className="flex flex-col items-center w-full min-h-screen pb-32 px-4">
+      <div className="max-w-2xl w-full space-y-6">
+        {/* Answer Section */}
+        {answer && (
+          <div ref={answerRef} className="space-y-6">
+            <div
+              className="prose max-w-none p-4 border rounded bg-gray-50 shadow-sm"
+              dangerouslySetInnerHTML={{ __html: displayedAnswer }}
+            />
+            {suggestedQuestions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {suggestedQuestions.map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleAsk(q)}
+                    className="px-4 py-2 text-sm rounded-full border border-gray-300 bg-white shadow-sm hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Persistent Input Bar */}
+      <div className="fixed bottom-0 left-0 w-full border-t bg-white p-4">
+        <div className="max-w-2xl mx-auto flex gap-2">
           <textarea
             value={query}
             placeholder={placeholder}
@@ -138,54 +128,17 @@ const Hero: React.FC = () => {
               }
             }}
             rows={2}
-            className="border rounded-md px-4 py-2 w-full resize-none focus:ring-2 focus:ring-blue-500 outline-none transition"
+            className="flex-grow border rounded-md px-4 py-2 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
           <button
-            type="submit"
+            onClick={() => handleAsk()}
             disabled={loading}
-            className="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700 disabled:opacity-50 transition"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           >
-            {loading ? "Thinking..." : "Ask"}
+            {loading ? "..." : "Ask"}
           </button>
-        </form>
-      ) : (
-        <div
-          ref={answerRef}
-          className="w-full max-w-2xl flex flex-col gap-6 animate-fadeIn"
-          key="answer-section"
-        >
-          {/* Animated answer (HTML preserved) */}
-          <div
-            className="answer prose max-w-none p-4 border rounded-md bg-gray-50 shadow-sm animate-slideUp whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: displayedAnswer }}
-          />
-
-          {/* Clickable suggested questions styled as chips */}
-          {suggestedQuestions.length > 0 && (
-            <div className="flex flex-wrap gap-2 animate-fadeIn delay-200">
-              {suggestedQuestions.map((q, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAsk(q)}
-                  className="px-4 py-2 text-sm rounded-full border border-gray-300 bg-white shadow-sm hover:bg-blue-50 hover:border-blue-400 hover:text-blue-700 transition"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Back to Ask button */}
-          <div>
-            <button
-              onClick={resetAsk}
-              className="mt-4 px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 transition"
-            >
-              ← Back to Ask
-            </button>
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

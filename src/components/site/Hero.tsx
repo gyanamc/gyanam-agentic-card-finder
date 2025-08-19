@@ -118,26 +118,36 @@ const Hero: React.FC = () => {
       className="hero flex flex-col items-center justify-center p-6 transition-all duration-500 ease-in-out"
     >
       {!answer ? (
-        <div
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleAsk();
+          }}
           className="w-full max-w-xl flex flex-col gap-3 animate-fadeIn"
           key="input-section"
         >
-          {/* Search Input */}
-          <input
-            type="text"
+          {/* Search Input (ChatGPT style) */}
+          <textarea
             value={query}
             placeholder={placeholder}
             onChange={(e) => setQuery(e.target.value)}
-            className="border rounded-md px-4 py-2 w-full focus:ring-2 focus:ring-blue-500 outline-none transition"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleAsk();
+              }
+            }}
+            rows={2}
+            className="border rounded-md px-4 py-2 w-full resize-none focus:ring-2 focus:ring-blue-500 outline-none transition"
           />
           <button
-            onClick={() => handleAsk()}
+            type="submit"
             disabled={loading}
             className="bg-blue-600 text-white rounded-md px-4 py-2 hover:bg-blue-700 disabled:opacity-50 transition"
           >
             {loading ? "Thinking..." : "Ask"}
           </button>
-        </div>
+        </form>
       ) : (
         <div
           ref={answerRef}

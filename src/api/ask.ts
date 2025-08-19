@@ -7,7 +7,7 @@ export type AskResponse = {
 
 async function ask(query: string): Promise<AskResponse> {
   try {
-    const response = await fetch("https://your-n8n-domain.com/webhook/ask", {
+    const response = await fetch("https://primary-production-da3f.up.railway.app/webhook/gyanam.store", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

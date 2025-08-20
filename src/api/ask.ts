@@ -1,5 +1,9 @@
 // src/api/ask.ts
-import { v4 as uuidv4 } from "uuid";
+
+// Use built-in randomUUID (Node 18+/modern browsers)
+function uuidv4() {
+  return crypto.randomUUID();
+}
 
 // Ensure sessionId persists across page reloads
 let sessionId = localStorage.getItem("sessionId");

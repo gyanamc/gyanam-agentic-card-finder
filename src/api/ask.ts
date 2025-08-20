@@ -1,4 +1,13 @@
 // src/api/ask.ts
+import { v4 as uuidv4 } from "uuid";
+
+// Ensure sessionId persists across page reloads
+let sessionId = localStorage.getItem("sessionId");
+if (!sessionId) {
+  sessionId = uuidv4();
+  localStorage.setItem("sessionId", sessionId);
+}
+
 export type AskResponse = {
   html: string;
   suggestedQuestions: string[];
@@ -11,8 +20,10 @@ async function ask(query: string): Promise<AskResponse> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ query }),
-    });
+      body: JSON.stringify({
+        query,
+        sessionId: sessionId
+      }),
 
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);

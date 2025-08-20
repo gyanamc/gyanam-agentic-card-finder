@@ -21,14 +21,11 @@ async function ask(query: string): Promise<AskResponse> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-  query,
-  sessionId: sessionId
-})
-});
+        query,
+        sessionId: sessionId
+      })
+    });
 
-if (!response.ok) {
-  throw new Error(`HTTP error ${response.status}`);
-}
     if (!response.ok) {
       throw new Error(`HTTP error ${response.status}`);
     }

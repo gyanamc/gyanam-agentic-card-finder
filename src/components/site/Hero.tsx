@@ -5,11 +5,16 @@ import ask from "../../api/ask";
 
 const TYPING_SPEED = 40;
 
+type Message = {
+  type: "user" | "bot";
+  text: string;
+};
+
 export default function Hero() {
   const [query, setQuery] = useState("");
-  const [messages, setMessages] = useState<{ type: "user" | "bot"; text: string }[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const chatEndRef = useRef(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -21,18 +26,18 @@ export default function Hero() {
   const handleAsk = async () => {
     if (!query.trim()) return;
 
-    const userMessage = { type: "user" as const, text: query };
+    const userMessage: Message = { type: "user", text: query };
     setMessages((prev) => [...prev, userMessage]);
     setQuery("");
     setLoading(true);
 
     try {
       const res = await ask(userMessage.text);
-      const botFullAnswer = res.html || "Sorry, no response.";
+      const botFullAnswer: string = res.html || "Sorry, no response.";
       let progressiveAnswer = "";
 
-      // Create a temporary bot message first
-      const tempIndex = messages.length + 1; // future index
+      // Create a placeholder bot message
+      const tempIndex = messages.length + 1;
       setMessages((prev) => [...prev, { type: "bot", text: "" }]);
 
       const words = botFullAnswer.split(" ");
@@ -57,7 +62,11 @@ export default function Hero() {
 
   return (
     <div className="w-full px-4 md:px-16 flex justify-center">
-      <div className={`w-full ${messages.length > 0 ? "max-w-4xl" : "max-w-xl"} mx-auto mt-8 bg-gray-50 rounded-2xl shadow-lg flex flex-col p-6 transition-all duration-200`}>
+      <div
+        className={`w-full ${
+          messages.length > 0 ? "max-w-4xl" : "max-w-xl"
+        } mx-auto mt-8 bg-gray-50 rounded-2xl shadow-lg flex flex-col p-6 transition-all duration-200`}
+      >
         {/* Chat Window */}
         <div className="min-h-[220px] max-h-[65vh] overflow-y-auto mb-4 space-y-4">
           {messages.map((msg, i) => (
@@ -70,31 +79,32 @@ export default function Hero() {
               }`}
             >
               {msg.type === "bot" ? (
-  <div
-    className="prose prose-sm max-w-none text-gray-800 leading-relaxed
-               [&>ul]:list-disc [&>ul]:pl-4 
-               [&>ol]:list-decimal [&>ol]:pl-4 
-               [&>li]:mb-1 
-               [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 
-               [&>h2]:text-lg [&>h2]:font-semibold [&>h2]:mb-2 
-               [&>h3]:text-base [&>h3]:font-medium [&>h3]:mb-1 
-               [&>strong]:font-semibold 
-               [&>em]:italic 
-               [&>code]:bg-gray-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>code]:text-pink-600 
-               [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 
-               [&>th]:bg-gray-100 [&>th]:p-2 [&>th]:text-left [&>th]:font-medium 
-               [&>td]:p-2 [&>td]:border-b [&>td]:border-gray-200 
-               [&>blockquote]:border-l-4 [&>blockquote]:border-blue-500 [&>blockquote]:bg-blue-50 [&>blockquote]:p-3 [&>blockquote]:italic
-               [&>a]:text-blue-600 [&>a]:underline hover:[&>a]:text-blue-800"
-    dangerouslySetInnerHTML={{ __html: msg.text }}
-  />
-) : (
-  <div dangerouslySetInnerHTML={{ __html: msg.text }} />
-)}
+                <div
+                  className="prose prose-sm max-w-none text-gray-800 leading-relaxed
+                             [&>ul]:list-disc [&>ul]:pl-4 
+                             [&>ol]:list-decimal [&>ol]:pl-4 
+                             [&>li]:mb-1 
+                             [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 
+                             [&>h2]:text-lg [&>h2]:font-semibold [&>h2]:mb-2 
+                             [&>h3]:text-base [&>h3]:font-medium [&>h3]:mb-1 
+                             [&>strong]:font-semibold 
+                             [&>em]:italic 
+                             [&>code]:bg-gray-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>code]:text-pink-600 
+                             [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 
+                             [&>th]:bg-gray-100 [&>th]:p-2 [&>th]:text-left [&>th]:font-medium 
+                             [&>td]:p-2 [&>td]:border-b [&>td]:border-gray-200 
+                             [&>blockquote]:border-l-4 [&>blockquote]:border-blue-500 [&>blockquote]:bg-blue-50 [&>blockquote]:p-3 [&>blockquote]:italic
+                             [&>a]:text-blue-600 [&>a]:underline hover:[&>a]:text-blue-800"
+                  dangerouslySetInnerHTML={{ __html: msg.text }}
+                />
+              ) : (
+                <div>{msg.text}</div>
+              )}
             </div>
           ))}
           <div ref={chatEndRef} />
         </div>
+
         {/* Input Bar */}
         <div className="flex items-end gap-2 bg-white p-4 rounded-xl shadow">
           <textarea

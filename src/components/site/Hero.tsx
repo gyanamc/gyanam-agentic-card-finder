@@ -63,13 +63,21 @@ export default function Hero() {
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`w-fit max-w-2xl p-3 rounded-xl ${
+              className={`w-fit max-w-2xl p-4 rounded-xl ${
                 msg.type === "user"
                   ? "bg-blue-600 text-white ml-auto"
-                  : "bg-white text-gray-900 mr-auto shadow"
+                  : "bg-white text-gray-900 mr-auto shadow prose prose-sm max-w-none"
               }`}
-              dangerouslySetInnerHTML={{ __html: msg.text }}
-            />
+            >
+              {msg.type === "bot" ? (
+                <div 
+                  className="space-y-3 text-gray-800 leading-relaxed [&>ul]:list-disc [&>ul]:pl-4 [&>ol]:list-decimal [&>ol]:pl-4 [&>li]:mb-1 [&>h1]:text-xl [&>h1]:font-bold [&>h1]:text-gray-900 [&>h1]:mb-2 [&>h2]:text-lg [&>h2]:font-semibold [&>h2]:text-gray-800 [&>h2]:mb-2 [&>h3]:text-base [&>h3]:font-medium [&>h3]:text-gray-700 [&>h3]:mb-1 [&>p]:mb-2 [&>strong]:font-semibold [&>strong]:text-gray-900 [&>em]:italic [&>code]:bg-gray-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>code]:text-pink-600 [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 [&>th]:bg-gray-100 [&>th]:p-2 [&>th]:text-left [&>th]:font-medium [&>td]:p-2 [&>td]:border-b [&>td]:border-gray-200 [&>blockquote]:border-l-4 [&>blockquote]:border-blue-500 [&>blockquote]:bg-blue-50 [&>blockquote]:p-3 [&>blockquote]:italic"
+                  dangerouslySetInnerHTML={{ __html: msg.text }}
+                />
+              ) : (
+                <div dangerouslySetInnerHTML={{ __html: msg.text }} />
+              )}
+            </div>
           ))}
           <div ref={chatEndRef} />
         </div>

@@ -80,24 +80,24 @@ export default function Hero() {
             >
               {msg.type === "bot" ? (
                 <div
-                  className="prose prose-sm max-w-none text-gray-800 leading-relaxed
-                             [&>ul]:list-disc [&>ul]:pl-4 
-                             [&>ol]:list-decimal [&>ol]:pl-4 
-                             [&>li]:mb-1 
-                             [&>h1]:text-xl [&>h1]:font-bold [&>h1]:mb-2 
-                             [&>h2]:text-lg [&>h2]:font-semibold [&>h2]:mb-2 
-                             [&>h3]:text-base [&>h3]:font-medium [&>h3]:mb-1 
-                             [&>strong]:font-semibold 
-                             [&>em]:italic 
-                             [&>code]:bg-gray-100 [&>code]:px-1 [&>code]:py-0.5 [&>code]:rounded [&>code]:text-sm [&>code]:text-pink-600 
-                             [&>table]:w-full [&>table]:border-collapse [&>table]:my-4 
-                             [&>th]:bg-gray-100 [&>th]:p-2 [&>th]:text-left [&>th]:font-medium 
-                             [&>td]:p-2 [&>td]:border-b [&>td]:border-gray-200 
-                             [&>blockquote]:border-l-4 [&>blockquote]:border-blue-500 [&>blockquote]:bg-blue-50 [&>blockquote]:p-3 [&>blockquote]:italic
-                             [&>a]:text-blue-600 [&>a]:underline hover:[&>a]:text-blue-800"
-                  dangerouslySetInnerHTML={{ __html: msg.text }}
-                />
-              ) : (
+  className="prose prose-sm max-w-none text-gray-800 leading-relaxed
+             [&_ul]:list-disc [&_ul]:pl-4 
+             [&_ol]:list-decimal [&_ol]:pl-4 
+             [&_li]:mb-1 
+             [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 
+             [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 
+             [&_h3]:text-base [&_h3]:font-medium [&_h3]:mb-1 
+             [&_strong]:font-semibold 
+             [&_em]:italic 
+             [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:text-pink-600 
+             [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 
+             [&_th]:bg-gray-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-medium 
+             [&_td]:p-2 [&_td]:border-b [&_td]:border-gray-200 
+             [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:bg-blue-50 [&_blockquote]:p-3 [&_blockquote]:italic
+             [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800"
+  dangerouslySetInnerHTML={{ __html: msg.text }}
+                  />
+            ) : (
                 <div>{msg.text}</div>
               )}
             </div>

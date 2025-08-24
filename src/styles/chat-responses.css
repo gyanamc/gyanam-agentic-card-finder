@@ -1,0 +1,128 @@
+/* Chat Response Styling */
+.bot-response {
+  line-height: 1.6;
+  color: #374151;
+}
+
+.bot-response h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 1.5rem 0 1rem 0;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.bot-response h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 1.25rem 0 0.75rem 0;
+}
+
+.bot-response h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.bot-response p {
+  margin: 0.75rem 0;
+  color: #4b5563;
+}
+
+.bot-response ul, .bot-response ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  color: #4b5563;
+}
+
+.bot-response li {
+  margin: 0.25rem 0;
+}
+
+.bot-response strong {
+  font-weight: 600;
+  color: #111827;
+}
+
+.bot-response em {
+  font-style: italic;
+  color: #6b7280;
+}
+
+.bot-response code {
+  background-color: #f3f4f6;
+  color: #db2777;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+}
+
+.bot-response pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.bot-response pre code {
+  background: transparent;
+  color: #f9fafb;
+  padding: 0;
+}
+
+.bot-response table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  background-color: #fff;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.bot-response th {
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bot-response td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+  color: #4b5563;
+}
+
+.bot-response tr:last-child td {
+  border-bottom: none;
+}
+
+.bot-response tr:hover {
+  background-color: #f9fafb;
+}
+
+.bot-response blockquote {
+  border-left: 4px solid #3b82f6;
+  background-color: #eff6ff;
+  margin: 1rem 0;
+  padding: 1rem;
+  font-style: italic;
+  color: #1e40af;
+}
+
+.bot-response a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.bot-response a:hover {
+  color: #1d4ed8;
+}

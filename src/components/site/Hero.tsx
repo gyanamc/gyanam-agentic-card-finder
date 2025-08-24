@@ -39,8 +39,6 @@ export default function Hero() {
       for (let i = 0; i < words.length; i++) {
         progressiveAnswer += (i > 0 ? " " : "") + words[i];
         await new Promise((r) => setTimeout(r, TYPING_SPEED));
-
-        // Update last bot message only
         setMessages((prev) =>
           prev.map((m, idx) =>
             idx === tempIndex ? { ...m, text: progressiveAnswer } : m
@@ -58,9 +56,9 @@ export default function Hero() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] px-4 py-6 bg-gray-50">
+    <div className="flex flex-col max-w-2xl mx-auto mt-8 px-4 py-6 bg-gray-50 rounded-lg shadow">
       {/* Chat Window */}
-      <div className="flex-grow overflow-y-auto mb-4 space-y-4">
+      <div className="min-h-[200px] max-h-[50vh] overflow-y-auto mb-4 space-y-4">
         {messages.map((msg, i) => (
           <div
             key={i}
@@ -74,8 +72,7 @@ export default function Hero() {
         ))}
         <div ref={chatEndRef} />
       </div>
-
-      {/* Input Bar Fixed at Bottom */}
+      {/* Input Bar */}
       <div className="flex items-end gap-2 bg-white p-4 rounded-lg shadow-sm">
         <textarea
           value={query}

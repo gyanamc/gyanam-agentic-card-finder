@@ -1,4 +1,3 @@
-// Hero.tsx
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -12,6 +11,7 @@ export default function Hero() {
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -20,6 +20,7 @@ export default function Hero() {
 
   const handleAsk = async () => {
     if (!query.trim()) return;
+
     const userMessage = { type: "user" as const, text: query };
     setMessages((prev) => [...prev, userMessage]);
     setQuery("");
@@ -29,8 +30,11 @@ export default function Hero() {
       const res = await ask(userMessage.text);
       const botFullAnswer = res.html || "Sorry, no response.";
       let progressiveAnswer = "";
-      const tempIndex = messages.length + 1;
+
+      // Create a temporary bot message first
+      const tempIndex = messages.length + 1; // future index
       setMessages((prev) => [...prev, { type: "bot", text: "" }]);
+
       const words = botFullAnswer.split(" ");
       for (let i = 0; i < words.length; i++) {
         progressiveAnswer += (i > 0 ? " " : "") + words[i];

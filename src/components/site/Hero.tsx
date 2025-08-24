@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ask from "../../api/ask";
 
 const TYPING_SPEED = 40;
@@ -75,29 +77,33 @@ export default function Hero() {
               className={`w-fit max-w-2xl p-4 rounded-xl ${
                 msg.type === "user"
                   ? "bg-blue-600 text-white ml-auto"
-                  : "bg-white text-gray-900 mr-auto shadow prose prose-sm max-w-none"
+                  : "bg-white text-gray-900 mr-auto shadow"
               }`}
             >
               {msg.type === "bot" ? (
-                <div
-  className="prose prose-sm max-w-none text-gray-800 leading-relaxed
-             [&_ul]:list-disc [&_ul]:pl-4 
-             [&_ol]:list-decimal [&_ol]:pl-4 
-             [&_li]:mb-1 
-             [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2 
-             [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2 
-             [&_h3]:text-base [&_h3]:font-medium [&_h3]:mb-1 
-             [&_strong]:font-semibold 
-             [&_em]:italic 
-             [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:text-pink-600 
-             [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 
-             [&_th]:bg-gray-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-medium 
-             [&_td]:p-2 [&_td]:border-b [&_td]:border-gray-200 
-             [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:bg-blue-50 [&_blockquote]:p-3 [&_blockquote]:italic
-             [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800"
-  dangerouslySetInnerHTML={{ __html: msg.text }}
-                  />
-            ) : (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  className="
+                    prose prose-sm max-w-none text-gray-800 leading-relaxed
+                    [&_ul]:list-disc [&_ul]:pl-4
+                    [&_ol]:list-decimal [&_ol]:pl-4
+                    [&_li]:mb-1
+                    [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-2
+                    [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mb-2
+                    [&_h3]:text-base [&_h3]:font-medium [&_h3]:mb-1
+                    [&_strong]:font-semibold
+                    [&_em]:italic
+                    [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:text-pink-600
+                    [&_table]:w-full [&_table]:border-collapse [&_table]:my-4
+                    [&_th]:bg-gray-100 [&_th]:p-2 [&_th]:text-left [&_th]:font-medium
+                    [&_td]:p-2 [&_td]:border-b [&_td]:border-gray-200
+                    [&_blockquote]:border-l-4 [&_blockquote]:border-blue-500 [&_blockquote]:bg-blue-50 [&_blockquote]:p-3 [&_blockquote]:italic
+                    [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800
+                  "
+                >
+                  {msg.text}
+                </ReactMarkdown>
+              ) : (
                 <div>{msg.text}</div>
               )}
             </div>
